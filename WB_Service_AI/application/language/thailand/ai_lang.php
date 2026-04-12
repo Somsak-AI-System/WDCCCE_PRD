@@ -1,0 +1,50 @@
+<?php
+
+$lang['home'] = "หน้าหลัก";
+$lang['LBL_USERLOGIN_ROLE'] = "ข้อมูลผู้ใช้";
+$lang['LBL_JOB_INFORMATION'] = "Job Information";
+$lang['LBL_NOTE_INFORMATION'] = "ข้อมูลทั่วไป";
+$lang['LBL_DESCRIPTION'] = "Description";
+$lang['LBL_FILE_INFORMATION'] = "File Information";
+$lang['LBL_TICKET_INFORMATION'] = "Case Information";
+$lang['LBL_QUOTE_INFORMATION'] = "Quotation Information";
+$lang['LBL_SERIAL_INFORMATION'] = "Serial Information";
+$lang['LBL_PRICING_INFORMATION'] = "Pricing Information";
+$lang['LBL_IMAGE_INFORMATION'] = "Image Information";
+$lang['LBL_LEAD_INFORMATION'] = "Lead Information";
+$lang['LBL_COMMENTS'] = "ผลการตรวจสอบหรือแก้ไข รายการแจ้งซ่อม";
+// $lang['LBL_COMMENTS'] = "ผลการตรวจสอบหรือแก้ไข รายการแจ้งซ่อม";
+$lang['LBL_CONTACT_INFORMATION'] = "Contact Information";
+$lang['LBL_EVENT_INFORMATION'] = "Sales Visit Information";
+$lang['LBL_SPAREPART_INFORMATION'] = "Sparepart Information";
+$lang['LBL_SPAREPARTLIST_INFORMATION'] = "Sparepart List Information";
+$lang['LBL_ERRORS_INFORMATION'] = "Errors Information";
+$lang['LBL_ERRORSLIST_INFORMATION'] = "Errors List Information";
+$lang['LBL_CUSTOM_INFORMATION'] = "Custom Information";
+$lang['LBL_ACCOUNT_INFORMATION'] = "Account Information";
+$lang['LBL_ADDRESS_INFORMATION'] = "ข้อมูลที่อยู่";
+$lang['LBL_REDEMPTION_INFORMATION'] = "Redemption Information";
+$lang['LBL_DESCRIPTION_INFORMATION'] = "Description Information";
+$lang['LBL_QUOTATION_INFORMATION'] = "Quotation Information";
+$lang['LBL_USER_IMAGE_INFORMATION'] = "Image Information";
+$lang['LBL_MORE_INFORMATION'] = "ข้อมูลอื่นๆ";
+$lang['LBL_USER_ADV_OPTIONS'] = "User Advanced Options";
+$lang['Inspector Signature'] = "ลายเซ็นเจ้าหน้าที่";
+$lang['Customer Signature'] = "ลายเซ็นลูกค้า";
+$lang['Image Information'] = "ข้อมูลรูปภาพ";
+$lang['Asset Information'] = "ข้อมูล Asset";
+$lang['Customer Information'] = "ข้อมูลลูกค้า";
+$lang['LBL_ORDER_INFORMATION'] = "Order Information";
+$lang['LBL_PROJECTORDER_INFORMATION'] = "ข้อมูล Project Order";
+$lang['LBL_COMPETITOR_INFORMATION'] = "ข้อมูล Complitator";
+$lang['LBL_OPPORTUNITY_INFORMATION'] = "ข้อมูล Opportunity";
+$lang['LBL_PROJECTS_INFORMATION'] = "Projects Information";
+$lang['LBL_DEAL_INFORMATION'] = "Deal Information";
+$lang['LBL_QUESTIONNAIRE_INFORMATION'] = "Questionnaire Information ";
+$lang['LBL_FAQ_INFORMATION'] = "Faq Information ";
+$lang['LBL_ANNOUNCEMENT_INFORMATION'] = "Announcement Information ";
+
+$lang['LBL_EXPENSE_INFORMATION'] = "Expense Information";
+$lang['LBL_SAMPLEREQUISITION_INFORMATION'] = "Sample Requisition Information";
+$lang['LBL_PROJECTS_INFORMATION'] = "Projects Information";
+/* End of file */

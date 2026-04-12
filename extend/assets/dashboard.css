@@ -1,0 +1,80 @@
+h4, h5 {
+    display: inline-block;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+hr {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.nav-tabs>li>a {
+    color: #555;
+    background-color: transparent;
+    padding: 2px 8px;
+}
+.nav-tabs>li>a>i{
+    color: #ccc;
+    cursor: pointer;
+    font-size: 80%;
+    margin-left: 4px;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    color: #555;
+    background-color: transparent;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-bottom: 3px solid #000;
+    cursor: default;
+}
+.nav-tabs>li>a:hover, .nav-tabs>li>a:focus {
+    color: #555;
+    background-color: transparent;
+    border-top-color: transparent;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-bottom: 3px solid #555;
+}
+.nav-tabs li.active i, .nav-tabs>li>a:hover>i, .nav-tabs>li>a:focus>i{
+    color: #555;
+}
+
+.nav-tabs>li>button {
+    margin-top:2px;
+}
+.card-header {
+    padding: 0px;
+    background-color: transparent;
+}
+.card-title {
+    padding: 3px 5px;
+    margin-bottom: 0px;
+}
+.card-title > .float-right {
+    margin-top: 3px;
+}
+.card-title > .float-right > .fa-expand {
+    cursor: pointer;
+}
+.card-title > .float-right > .dropdown {
+    display: inline-block;
+}
+.card-title > .float-right > .dropdown > .btn {
+    border: none;
+}
+.overme {
+    max-width: 400px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow: ellipsis;
+}
+
+.drag-icon {
+    cursor: move;
+}
+
+.dropdown-toggle:after { content: none }

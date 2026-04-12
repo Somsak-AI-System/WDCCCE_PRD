@@ -1,0 +1,96 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `p_questionnaire_export`( IN questionnairetemplateid INT, IN datefrm VARCHAR ( 20 ), IN dateto VARCHAR ( 20 ) )
+BEGIN
+DECLARE done INT DEFAULT FALSE;
+DECLARE choice_title VARCHAR ( 255 );
+DECLARE choiceid VARCHAR ( 255 );
+DECLARE concatID TEXT;
+DECLARE sqlstmt text;
+DECLARE cursor_i CURSOR FOR   
+SELECT
+  aicrm_questionnaire_choice.choiceid,
+  aicrm_questionnaire_choice.choice_title,
+	GROUP_CONCAT( CONCAT('aicrm_questionnaire_choice.choiceid = ',aicrm_questionnaire_choice.choiceid) SEPARATOR ' OR ') AS idConcat
+FROM
+  aicrm_questionnaire
+  INNER JOIN aicrm_questionnairecf ON aicrm_questionnairecf.questionnaireid = aicrm_questionnaire.questionnaireid
+  INNER JOIN aicrm_questionnairetemplate ON aicrm_questionnairetemplate.questionnairetemplateid = aicrm_questionnaire.questionnairetemplateid
+-- 	INNER JOIN aicrm_questionnairetemplate_choice ON aicrm_questionnairetemplate_choice.questionnairetemplateid = aicrm_questionnairetemplate.questionnairetemplateid
+  INNER JOIN aicrm_questionnaire_choice ON aicrm_questionnaire_choice.questionnaireid = aicrm_questionnaire.questionnaireid
+--  LEFT JOIN aicrm_questionnaire_choicedetail ON aicrm_questionnaire_choice.choiceid = aicrm_questionnaire_choicedetail.choiceid 
+WHERE
+  aicrm_questionnairetemplate.questionnairetemplateid = questionnairetemplateid
+AND aicrm_questionnaire_choice.choiceid != '' 
+AND aicrm_questionnaire_choice.choice_title != '' 
+GROUP BY
+  aicrm_questionnaire_choice.choice_title;
+  
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+SET sqlstmt = '';
+OPEN cursor_i;
+read_loop : LOOP
+  FETCH cursor_i INTO choiceid,choice_title,concatID;
+  IF done THEN 
+    LEAVE read_loop;
+  END IF;
+--   SET sqlstmt = concat( sqlstmt, ',GROUP_CONCAT(if(aicrm_questionnaire_choice.choiceid=', choiceid, ',concat(aicrm_questionnaire_answer.choicedetail,'' ''),'''') separator '''') as ''', choice_title, ''' ' );
+	SET sqlstmt = concat( sqlstmt, ',GROUP_CONCAT(if(', concatID, ',concat(aicrm_questionnaire_answer.choicedetail,'' ''),'''') separator '''') as ''', choice_title, ''' ' );
+END LOOP read_loop;
+CLOSE cursor_i;
+-- สาขา	
+SET @s = concat( 'select 
+	-- aicrm_questionnaire.questionnairetemplateid,
+  -- aicrm_questionnaire.questionnaireid AS ''ID'',
+	aicrm_questionnaire.questionnaire_no as ''หมายเลขแบบสอบถาม'',
+	aicrm_questionnaire.scoring as ''แบบประเมินเครดิต'',
+	aicrm_questionnairecf.cf_5377 as ''คะแนนที่ได้'',
+	IFNULL(aicrm_questionnaire.scoringresult,'''') AS ''ผลการประเมินเครดิต'',
+	IFNULL(aicrm_activity.activitytype,'''') AS ''รายการเค้าพบลูกค้า'',
+  aicrm_questionnaire.questionnaire_name AS ''ชื่อแบบสอบถาม'',
+	aicrm_users.first_name AS ''ผู้รับผิดชอบ'',
+	IFNULL(aicrm_account.accountname,'''') AS ''ชื่อลูกค้า'',
+	IFNULL(aicrm_deal.deal_no,'''') AS ''ชื่อโอกาส'',
+  IFNULL(aicrm_questionnaire.mobile,'''') AS ''เบอร์โทรศัพท์'',
+  IFNULL(aicrm_questionnaire.lineid,'''') AS ''Line ID'',
+	IFNULL(aicrm_questionnaire.facebookid,'''') AS ''Facebook ID'',
+	IFNULL(aicrm_questionnaire.auditor,'''') AS ''เจ้าหน้าที่'',
+	IFNULL(aicrm_questionnaire.branchlocation,'''') AS ''ที่อยู่สาขา'',
+	IFNULL(aicrm_questionnaire.accountlocation,'''') AS ''ที่อยู่ลูกค้า'',
+	IFNULL(aicrm_questionnaire.sale_checkin,'''') AS ''สถานที่เช็คอิน'',
+	IFNULL(aicrm_questionnaire.sale_checkindate,'''') AS ''เวลาที่เช็คอิน'',
+	IFNULL(aicrm_questionnaire.sale_checkoutlocation,'''') AS ''สถานที่เช็คเอ้าท์'',
+	IFNULL(aicrm_questionnaire.sale_checkoutdate,'''') AS ''เวลาที่เช็คเอ้าท์'',
+	aicrm_questionnairetemplate.questionnairetemplate_name AS ''ชื่อเทมเพลตแบบสอบถาม''
+  ', sqlstmt, '
+  from  aicrm_questionnaire
+  INNER JOIN aicrm_questionnairecf on aicrm_questionnairecf.questionnaireid = aicrm_questionnaire.questionnaireid
+	LEFT JOIN aicrm_account ON aicrm_account.accountid = aicrm_questionnaire.accountid
+	LEFT JOIN aicrm_activity ON aicrm_activity.activityid = aicrm_questionnaire.activityid
+	LEFT JOIN aicrm_deal ON aicrm_deal.dealid = aicrm_questionnaire.dealid
+  INNER JOIN aicrm_crmentity on aicrm_crmentity.crmid = aicrm_questionnaire.questionnaireid
+	INNER JOIN aicrm_users ON aicrm_users.id = aicrm_crmentity.smownerid
+  INNER JOIN aicrm_questionnairetemplate on aicrm_questionnairetemplate.questionnairetemplateid = aicrm_questionnaire.questionnairetemplateid
+  -- LEFT JOIN aicrm_questionnairetemplate_choice ON aicrm_questionnairetemplate.questionnairetemplateid = aicrm_questionnairetemplate_choice.questionnairetemplateid
+  LEFT JOIN aicrm_questionnaire_choice ON aicrm_questionnaire.questionnaireid = aicrm_questionnaire_choice.questionnaireid
+  -- INNER JOIN aicrm_questionnaire_choicedetail ON aicrm_questionnaire_choice.choiceid = aicrm_questionnaire_choicedetail.choiceid
+  LEFT JOIN aicrm_questionnaire_answer ON aicrm_questionnaire.questionnaireid = aicrm_questionnaire_answer.questionnaireid
+  AND aicrm_questionnaire_choice.choiceid = aicrm_questionnaire_answer.choiceid
+  -- AND aicrm_questionnaire_choicedetail.choicedetailid = aicrm_questionnaire_answer.choicedetailid
+  WHERE aicrm_crmentity.deleted = 0 AND aicrm_questionnairetemplate.questionnairetemplateid = ', questionnairetemplateid, ' ' );
+IF IFNULL(datefrm,'')<>'' THEN
+  SET @s = CONCAT(@s ,' AND DATE_FORMAT(aicrm_questionnaire.sale_checkindate, ''%Y-%m-%d'' ) >= ''',datefrm,''' ');
+END IF ;
+
+IF IFNULL(dateto,'')<>'' THEN
+  SET @s = CONCAT(@s ,' AND DATE_FORMAT(aicrm_questionnaire.sale_checkindate, ''%Y-%m-%d'' ) <= ''',dateto,''' ');
+END IF ;
+
+SET @s = CONCAT(@s ,' GROUP BY aicrm_questionnaire.questionnaireid ORDER BY aicrm_questionnaire.sale_checkindate asc');
+-- SELECT @s;
+PREPARE stmt 
+FROM
+  @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+END

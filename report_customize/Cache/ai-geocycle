@@ -1,0 +1,100 @@
+a:3:{s:4:"time";i:1416972535;s:3:"ttl";i:100000000;s:4:"data";s:7886:" <ul class='sidebar-menu'><li class='treeview' id='WC0100'><a href='#'><i class='fa fa-truck'></i> <span>Queuing</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0100'>
+  <li id='WC0101'><a href='http://localhost/sccc/queuing/geocycle_monitoring'><i class='fa fa-angle-double-right'></i>Geocycle Monitoring</a></li>
+  <li id='WC0102'><a href='http://localhost/sccc/queuing/geocycle_dashboard'><i class='fa fa-angle-double-right'></i>Geocycle - Driver Dashboard</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0400'><a href='#'><i class='fa fa-bar-chart-o'></i> <span>Report</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0400'>
+  <li class='treeview' id='WC0507'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถลูกค้า(Waste)</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0507'>
+  <li id='WC0508'><a href='http://localhost/sccc/report/geocycle_monitoring/geo_rpt_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0509'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถลูกค้า(STO)</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0509'>
+  <li id='WC0510'><a href='http://localhost/sccc/report/geocycle_monitoring/geo_rpt_sto_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน(STO)</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0511'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถPO</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0511'>
+  <li id='WC0512'><a href='http://localhost/sccc/report/geocycle_rawmat_monitoring/geo_po_rpt_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน(PO)</a></li>
+</ul> 
+</li> 
+  <li id='WC0401'><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_monitoring_license'><i class='fa fa-angle-double-right'></i>Truck Monitoring</a></li>
+  <li id='WC0521'><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_delay'><i class='fa fa-angle-double-right'></i>Truck Delay Report</a></li>
+  <li id='WC0402'><a href='http://localhost/sccc/report/geocycle_monitoring/geo_station_monitoring'><i class='fa fa-angle-double-right'></i>Station Monitoring</a></li>
+</ul> 
+</li>
+<li class='treeview' id='FU0001'><a href='#'><i class='fa fa-user'></i> <span>User Management</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='FU0001'>
+  <li id='WC0403'><a href='http://localhost/sccc/user/user_management'><i class='fa fa-angle-double-right'></i>Manage User</a></li>
+  <li id='WC0404'><a href='http://localhost/sccc/user/user/user_registrator'><i class='fa fa-angle-double-right'></i>Add User Account</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0300'><a href='#'><i class='fa fa-key'></i> <span>Role & Permission</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0300'>
+  <li id='WC0301'><a href='http://localhost/sccc/privilege/privilege/form_management'><i class='fa fa-angle-double-right'></i>Form Management</a></li>
+  <li id='WC0302'><a href='http://localhost/sccc/privilege/privilege/role_management'><i class='fa fa-angle-double-right'></i>Role Management</a></li>
+  <li id='WC0303'><a href='http://localhost/sccc/privilege/privilege/user2security'><i class='fa fa-angle-double-right'></i>Management Permission</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0200'><a href='#'><i class='fa fa-cog'></i> <span>System Configuration</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0200'>
+  <li class='treeview' id='WC0201'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>Geocycle Configuration</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0201'>
+  <li id='WC0202'><a href='http://localhost/sccc/masterdata/dailyplan/geocycle_dailyplan'><i class='fa fa-angle-double-right'></i>Daily Plan Upload</a></li>
+  <li id='WC0405'><a href='http://localhost/sccc/masterdata/geocycle_window_time/geocycle_window_time_bypoint'><i class='fa fa-angle-double-right'></i>Window Time By Unloading Plant</a></li>
+</ul> 
+</li> 
+</ul> 
+</li>
+<li class='treeview' id='WC0500'><a href='#'><i class='fa fa-edit'></i> <span>Data Management</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0500'>
+  <li class='treeview' id='WC0514'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>ยกเลิกรายการสินค้า</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0514'>
+  <li id='WC0501'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_so_cancel_truck'><i class='fa fa-angle-double-right'></i>ยกเลิกรายการสินค้า(Waste)</a></li>
+  <li id='WC0502'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_sto_cancel_truck'><i class='fa fa-angle-double-right'></i>ยกเลิกรายการสินค้า(Foil)</a></li>
+  <li id='WC0503'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_po_cancel_truck'><i class='fa fa-angle-double-right'></i>ยกเลิกรายการสินค้า(PO)</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0515'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>คืนสถานะเตรียมชั่งออก</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0515'>
+  <li id='WC0504'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_change_status'><i class='fa fa-angle-double-right'></i>คืนสถานะเตรียมชั่งออก(Waste)</a></li>
+  <li id='WC0505'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_sto_change_status'><i class='fa fa-angle-double-right'></i>คืนสถานะเตรียมชั่งออก(STO)</a></li>
+  <li id='WC0506'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_po_change_status'><i class='fa fa-angle-double-right'></i>คืนสถานะเตรียมชั่งออก(PO)</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0516'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>แก้ไขน้ำหนักชั่งเข้า</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0516'>
+  <li id='WC0517'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_so_update_weightin'><i class='fa fa-angle-double-right'></i>แก้ไขน้ำหนักชั่งเข้า(Waste)</a></li>
+  <li id='WC0518'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_sto_update_weightin'><i class='fa fa-angle-double-right'></i>แก้น้ำหนักชั่งเข้า(Foil)</a></li>
+  <li id='WC0519'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_po_update_weightin'><i class='fa fa-angle-double-right'></i>แก้น้ำหนักชั่งเข้า(PO)</a></li>
+</ul> 
+</li> 
+  <li id='WC0520'><a href='http://localhost/sccc/queuing/queue_maintenance/geo_edit_queuestt'><i class='fa fa-angle-double-right'></i>Edit Queue Status</a></li>
+  <li id='WC0513'><a href='http://localhost/sccc/queuing/queue_maintenance/edit_so_queuedata'><i class='fa fa-angle-double-right'></i>View Truck</a></li>
+</ul> 
+</li>
+ </ul>";}

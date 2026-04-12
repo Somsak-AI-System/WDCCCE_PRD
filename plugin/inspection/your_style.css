@@ -1,0 +1,180 @@
+/*
+ * It is advised not to edit the smartadmin_production.css
+ * as this will override any changes you make in the 
+ * later versions of this theme. 
+ * 
+ * We advise that you use use this CSS to override 
+ * SmartAdmin styles. 
+ * 
+ * Rename the stylesheet to whatever your liking so it will stay
+ * unique to you with each update of SmartAdmin.
+ */
+
+/*
+ * INDEX
+ * 
+ * - HTML
+ * - BODY
+ * - CUSTOM STYLES
+ */
+
+#content { /*min-height:600px;*/ }
+.table-form { margin-bottom:0px; }
+.table-form .input .table-form-head-text { border:0px; border-bottom:1px dotted #CCCCCC; text-align:center; font-weight:bold; }
+.table-form .input .table-form-input-text { border:0px; border-bottom:1px dotted #CCCCCC; text-align:center; color:#0000FF; padding-left:0px; padding-right:0px; }
+.table-form .input .add-form-input-text { border:0px; border-bottom:1px dotted #CCCCCC; color:#0000FF; padding-left:0px; padding-right:0px; }
+.remove-tr { display:none; }
+.tr-form:hover .remove-tr { display:block; }
+.table-form .pm-head { font-weight:bold; text-align:center; }
+.table-form .input .pm-inphead { border:0px; border-bottom:1px dotted #CCCCCC; font-weight:bold; }
+.table-form .input .pm-center { border:0px; border-bottom:1px dotted #CCCCCC; text-align:center; color:#0000FF; }
+.table-form .input .pm-left { border:0px; border-bottom:1px dotted #CCCCCC; color:#0000FF; }
+.table-form tr td { padding-left:0px !important; padding-right:0px !important; }
+.table-note .input .note-head { font-weight:bold; border:0px; border-bottom:1px dotted #CCCCCC; }
+.table-note .textarea .note-input { color:#0000FF; }
+.input-eq-opt { /*border:0px !important; border-bottom:1px dotted #CCCCCC !important; */ font-style:italic !important; color:#000000 !important; color:#0000FF !important; }
+.input-eq-opt[readonly="readonly"] { border:0px !important; border-bottom:1px dotted #CCCCCC !important; color:#000000 !important; }
+
+.table-cal tr td { /*width:12%;*/ }
+.table-cal-source tr td { width:8%; padding:0px; }
+.table-cal-source tr .td_source { text-align:center; width:5%; }
+
+.table-pm {}
+.show-error .help-block { display:block; }
+.hide-error .help-block { display:none; }
+.invalid { color:#FF0000; }
+::placeholder {
+  font-weight: 100; 
+  color: #dddcdd !important;
+}
+.last-update-form { font-size:80%; color:#999999; }
+
+#forms_table td:nth-child(1), #forms_table td:nth-child(4), #forms_table td:nth-child(6), #forms_table td:nth-child(7){ text-align:center !important; }
+#rename_form { width:100%; }
+
+#parameters_table td:nth-child(1), #parameters_table td:nth-child(3){ text-align:center !important; }
+.modal-body .invalid { color:#FF0000; }
+
+#institution_table td:nth-child(1), #institution_table td:nth-child(5){ text-align:center !important; }
+#standard_parameters_table td:nth-child(1), #standard_parameters_table td:nth-child(3), #standard_parameters_table td:nth-child(4), #standard_parameters_table td:nth-child(5), #standard_parameters_table td:nth-child(6){ text-align:center !important; }
+#standard_certificate_table td:nth-child(1), #standard_certificate_table td:nth-child(6), #standard_certificate_table td:nth-child(7), #standard_certificate_table td:nth-child(8){ text-align:center !important; }
+
+#standard-parameter-form .state-error { margin-bottom:0px !important; }
+#standard_parameters_table_wrapper .dt-toolbar, #standard_parameters_table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+
+#standard-certificate-form .state-error { margin-bottom:0px !important; }
+#standard_certificate_table_wrapper .dt-toolbar, #standard_certificate_table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+
+#teams_table td:nth-child(1), #teams_table td:nth-child(3) , #teams_table td:nth-child(4){ text-align:center !important; }
+#teams_table_wrapper .dt-toolbar, #teams_table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+
+#standard_table td:nth-child(1), #standard_table td:nth-child(10){ text-align:center !important; }
+#equipment_category_table td:nth-child(1), #equipment_category_table td:nth-child(2), #equipment_category_table td:nth-child(4){ text-align:center !important; }
+#hospital_table td:nth-child(1), #hospital_table td:nth-child(3){ text-align:center !important; }
+#user_groups_table td:nth-child(1), #user_groups_table td:nth-child(3), #user_groups_table td:nth-child(4){ text-align:center !important; }
+#users_table td:nth-child(1), #users_table td:nth-child(8){ text-align:center !important; }
+#equipment_type_table td:nth-child(1), #equipment_type_table td:nth-child(3){ text-align:center !important; }
+#equipment_manufacturer_table td:nth-child(1), #equipment_manufacturer_table td:nth-child(3){ text-align:center !important; }
+#vendors_table td:nth-child(1), #vendors_table td:nth-child(2), #vendors_table td:nth-child(7){ text-align:center !important; }
+#equipment_department_table td:nth-child(1), #equipment_department_table td:nth-child(2), #equipment_department_table td:nth-child(4){ text-align:center !important; }
+
+.dataTable th, .dataTable td { font-size:90%; }
+#equipments_table td:nth-child(1), #equipments_table td:nth-child(9){ text-align:center !important; }
+
+#plans_table td:nth-child(1), #plans_table td:nth-child(4), #plans_table td:nth-child(6){ text-align:center !important; }
+#plans_equipments td:nth-child(1){ text-align:center !important; }
+
+.dataTables_filter { width:auto; margin-left:5px; }
+.ColVis { margin-left:5px; }
+#select-team-box { float:left; margin-left:5px; width:auto; }
+.validate-highlight { border:1px solid #FF0000 !important; }
+.view-print { display:none; }
+
+.popover { padding:5px; }
+
+#SourceOfUncertainty .modal-dialog
+{
+
+}
+
+#cert-result {
+	width:100%; 
+	border:1px solid #333333;
+}
+
+#cert-result td {
+	padding:5px;
+	border:1px solid #333333;
+	text-align:center;
+}
+
+#custom-result {
+	width:100%; 
+}
+
+#custom-result td {
+	padding:5px;
+}
+
+#admin-missing-table_wrapper .dt-toolbar, #admin-missing-table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+#admin-missing-table td:nth-child(1), #admin-missing-table td:nth-child(3){ text-align:center !important; }
+
+#pm-list-table td:nth-child(1), #pm-list-table td:nth-child(3){ text-align:center !important; }
+
+#admin-status-table_wrapper .dt-toolbar, #admin-status-table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+#admin-status-table td:nth-child(1), #admin-status-table td:nth-child(3){ text-align:center !important; }
+
+#user-form .ecerinput[disabled] { background-color:#F4F4F4; cursor:default; }
+#user_certificate_table_wrapper .dt-toolbar, #user_certificate_table_wrapper .dt-toolbar-footer { padding:0px; border-bottom:0px; border-top:0px;}
+#user_certificate_table td:nth-child(1), #user_certificate_table td:nth-child(3), #user_certificate_table td:nth-child(4){ text-align:center !important; }
+
+#knowledge_table td:nth-child(2), #knowledge_table td:nth-child(3), #knowledge_table td:nth-child(4){ text-align:center !important; }
+
+#reports_summary td { vertical-align:middle; }
+#reports_summary td:nth-child(1), #reports_summary td:nth-child(4), #reports_summary td:nth-child(5){ text-align:center; }
+
+#summary_report_equipments { background-color: #FBFBFB; font-size: 100%; }
+#summary_report_equipments_wrapper .dt-toolbar { border-bottom: 0px; display: none;}
+#summary_report_equipments_wrapper .dt-toolbar-footer { border-top: 0px;}
+#summary_report_equipments td:nth-child(1) { text-align:center !important; }
+
+#summary_report_outofrange { background-color: #FBFBFB; font-size: 100%; }
+#summary_report_outofrange_wrapper .dt-toolbar { border-bottom: 0px; display: none;}
+#summary_report_outofrange_wrapper .dt-toolbar-footer { border-top: 0px;}
+#summary_report_outofrange td:nth-child(1) { text-align:center !important; }
+
+#summary_report_missing { background-color: #FBFBFB; font-size: 100%; }
+#summary_report_missing_wrapper .dt-toolbar { border-bottom: 0px; display: none;}
+#summary_report_missing_wrapper .dt-toolbar-footer { border-top: 0px;}
+#summary_report_missing td:nth-child(1) { text-align:center !important;  }
+
+#summary_user_calibrate td:nth-child(1) { text-align:center !important;  }
+
+#select-user-group { float:left; margin-left:0px; width:auto; }
+#select-form-status { float:left; margin-left:5px; width:auto; }
+#select-form-type { float:left; margin-left:0px; width:auto; }
+
+.dataTables_processing { top:80px; padding-bottom:80px; }
+
+#report_pending_approve_table td:nth-child(1), #report_pending_approve_table td:nth-child(5){ text-align:center !important; }
+
+#eqp-table-plan .checkbox i { border-color:#FFFFFF; }
+#hosp-table-action-plan { border:0px; }
+#hosp-table-action-plan td { text-align:center !important; vertical-align:middle !important; }
+
+#left-panel { background-color:#FFFFFF; }
+
+.ui-autocomplete-loading { background-position: 85% 50% !important; }
+
+#table-annual-report th { font-size:90%; }
+#table-annual-report td { padding:8px 5px 8px 5px !important; vertical-align:top !important; }
+
+#table-annual-plan th { font-size:90%; }
+#table-annual-plan td { padding:8px 5px 8px 5px !important; vertical-align:top !important; }
+#table-annual-plan .taphead td { padding:8px 5px 8px 5px !important; vertical-align:top !important; border-top:1px solid #555555 !important; }
+
+.ui-sortable-helper { background-color:#FFFFCC !important; }
+.ui-sortable-placeholder { background-color:#FFFFCC; }
+.select2-hidden-accessible { display:none; }
+
+#plans_equipments a:visited { color:brown; }

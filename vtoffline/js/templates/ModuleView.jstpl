@@ -1,0 +1,24 @@
+<h2 class='big'>{$P.MODULE}</h2>
+
+<table cellpadding=0 cellspacing=5 class=small>
+	<tr>
+		<td>
+			<input type="button" class="button" value="{$P.APP.LBL_CREATE}"
+				onclick="vtoffline.IndexPage.Createview('{$P.MODULE}');">
+		</td>
+		<td>
+			<input type="button" class="button" value="{$P.APP.LBL_COLUMNS}"
+				onclick="vtoffline.IndexPage.Columnsview('{$P.MODULE}');">
+		</td>
+	</tr>
+</table>
+
+<p>
+	Configure your form by clicking <u>Columns</u>
+</p>
+
+<p>
+	With <u>Create</u> you can add new record of this module.<br>
+	It will be synchronized with vtiger CRM when you are Online.
+</p>
+

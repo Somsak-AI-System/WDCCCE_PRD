@@ -1,0 +1,16 @@
+<?xml version='1.0'?>
+<schema>
+	<tables>
+		<table>
+			<name>aicrm_quickview</name>
+			<sql><![CDATA[CREATE TABLE `aicrm_quickview` (
+  `fieldid` int(19) NOT NULL,
+  `related_fieldid` int(19) NOT NULL,
+  `sequence` int(19) NOT NULL,
+  `currentview` int(19) NOT NULL,
+  KEY `fk_1_aicrm_quickview` (`fieldid`),
+  CONSTRAINT `fk_1_aicrm_quickview` FOREIGN KEY (`fieldid`) REFERENCES `aicrm_field` (`fieldid`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8]]></sql>
+		</table>
+	</tables>
+</schema>

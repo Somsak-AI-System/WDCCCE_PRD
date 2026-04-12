@@ -1,0 +1,50 @@
+[
+	{
+		"parenttabid" : 1,
+		"parenttab_label" : "My Home Page",
+		"sequence" : 1,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 2,
+		"parenttab_label" : "Marketing",
+		"sequence" : 2,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 3,
+		"parenttab_label" : "Sales",
+		"sequence" : 3,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 4,
+		"parenttab_label" : "Support",
+		"sequence" : 4,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 5,
+		"parenttab_label" : "Analytics",
+		"sequence" : 5,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 6,
+		"parenttab_label" : "Inventory",
+		"sequence" : 6,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 7,
+		"parenttab_label" : "Tools",
+		"sequence" : 7,
+		"visible" : 0
+	},
+	{
+		"parenttabid" : 8,
+		"parenttab_label" : "Settings",
+		"sequence" : 8,
+		"visible" : 0
+	}
+]

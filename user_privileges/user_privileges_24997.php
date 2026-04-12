@@ -1,0 +1,9 @@
+<?php
+
+
+//This is the access privilege file
+$is_admin=true;
+
+$user_info=array('user_name'=>'admin.system','is_admin'=>'on','user_password'=>'$1$ad$x5BhFQGixteS1X2zGyEmC.','confirm_password'=>'$1$ad$x5BhFQGixteS1X2zGyEmC.','first_name'=>'Admin','last_name'=>'System','roleid'=>'H2','email1'=>'supportcrm@aisystem.co.th','status'=>'Active','activity_view'=>'Today','lead_view'=>'','currency_id'=>'1','currency_name'=>'Thailand, Baht','currency_code'=>'THB','currency_symbol'=>'฿','conv_rate'=>'1.000','hour_format'=>'','end_hour'=>'','start_hour'=>'','title'=>'','phone_work'=>'','department'=>'','phone_mobile'=>'','reports_to_id'=>'','phone_other'=>'','email2'=>'','phone_fax'=>'','yahoo_id'=>'','phone_home'=>'','imagename'=>'','date_format'=>'dd-mm-yyyy','signature'=>'','description'=>'','reminder_interval'=>'None','internal_mailer'=>'','address_street'=>'','address_city'=>'','address_state'=>'','address_postalcode'=>'','address_country'=>'','asterisk_extension'=>'','use_asterisk'=>'','approve_level1'=>'','approve_level2'=>'','approve_level3'=>'','approve_level4'=>'','approve_payment'=>'','section'=>'SYSTEM','sales_org'=>'','approve_expense_level1'=>'','approve_expense_level2'=>'','approve_expense_level3'=>'','approve_expense_level4'=>'','approve_sample_level1'=>'','approve_sample_level2'=>'','approve_sample_level3'=>'','approve_sample_level4'=>'','moaiwb'=>'1','moaimb'=>'1','passed_inspection'=>'1','accesskey'=>'rKrbYKZR8lz8EVH6','area'=>'','position'=>'','addressline1'=>'','addressline2'=>'','village'=>'','alley'=>'','road'=>'','region'=>'','province'=>'','district'=>'','subdistrict'=>'','postalcode'=>'','first_name_th'=>'Admin','last_name_th'=>'System','title_th'=>'','title_en'=>'','plan_type'=>'Weekly','track_report'=>'1','report_type'=>'Weekly','default_view'=>'List View','cf_501097'=>'--None--','cf_501096'=>'--None--','cf_501095'=>'--None--','record_id'=>'','record_module'=>'','id'=>'24997');
+
+?>

@@ -1,0 +1,38 @@
+@media (min-width: 1024px) {
+    .footer, .page-wrapper {
+        margin-left: 0px;
+    }
+}
+
+@media (min-width: 769px){
+    .navbar-header {
+        margin-left: 5px;
+    }
+}
+
+label {
+    margin-bottom: 0px;
+    cursor: pointer;
+}
+
+.show-sidebar .left-sidebar {
+    left: 0px
+}
+
+.left-sidebar {
+    left: -260px
+}
+
+.form-group {
+    margin-bottom: 5px;
+}
+
+/*.footer {*/
+    /*position: fixed;*/
+    /*bottom: 0px;*/
+/*}*/
+
+.card {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}

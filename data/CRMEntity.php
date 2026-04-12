@@ -1,0 +1,2859 @@
+<?php
+/*********************************************************************************
+ * The contents of this file are subject to the SugarCRM Public License Version 1.1.2
+ * ("License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at http://www.sugarcrm.com/SPL
+ * Software distributed under the License is distributed on an  "AS IS"  basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ * The Original Code is:  SugarCRM Open Source
+ * The Initial Developer of the Original Code is SugarCRM, Inc.
+ * Portions created by SugarCRM are Copyright (C) SugarCRM, Inc.;
+ * All Rights Reserved.
+ * Contributor(s): ______________________________________.
+ ********************************************************************************/
+/*********************************************************************************
+ * $Header: /advent/projects/wesat/aicrm_crm/vtigercrm/data/CRMEntity.php,v 1.16 2005/04/29 04:21:31 mickie Exp $
+ * Description:  Defines the base class for all data entities used throughout the
+ * application.  The base class including its methods and variables is designed to
+ * be overloaded with module-specific methods and variables particular to the
+ * module's base entity class.
+ ********************************************************************************/
+
+include_once('config.php');
+require_once('include/logging.php');
+require_once('data/Tracker.php');
+require_once('include/utils/utils.php');
+require_once('include/utils/UserInfoUtil.php');
+require_once("include/Zend/Json.php");
+
+class CRMEntity
+{
+    var $ownedby;
+
+    static function getInstance($module)
+    {
+        $modName = $module;
+        if ($module == 'Calendar' || $module == 'Events') {
+            $module = 'Calendar';
+            $modName = 'Activity';
+        }
+        // File access security check
+        if (!class_exists($modName)) {
+            checkFileAccess("modules/$module/$modName.php");
+            require_once("modules/$module/$modName.php");
+        }
+        $focus = new $modName();
+        return $focus;
+    }
+
+    function saveentity($module, $fileid = '')
+    {
+        global $current_user, $adb;//$adb added by raju for mass mailing
+        $insertion_mode = $this->mode;
+
+        $this->db->println("TRANS saveentity starts $module");
+        $this->db->startTransaction();
+        
+        foreach ($this->tab_name as $table_name) {
+            if ($table_name == "aicrm_crmentity") {
+                $this->insertIntoCrmEntity($module, $fileid);
+            } else {
+                $this->insertIntoEntityTable($table_name, $module, $fileid);
+            }
+        }
+        //Calling the Module specific save code
+        $this->save_module($module);
+
+        $assigntype = vtlib_purify($_REQUEST['assigntype']);
+
+        // if ($module != "Calendar" && $module != "Quotes"){
+        //     $this->whomToSendMail($module, $this->mode, $assigntype);
+        // }
+
+        $this->db->completeTransaction();
+        $this->db->println("TRANS saveentity ends");
+
+        // vtlib customization: Hook provide to enable generic module relation.
+        if ($_REQUEST['return_action'] == 'CallRelatedList') {
+            $for_module = vtlib_purify($_REQUEST['return_module']);
+            $for_crmid = vtlib_purify($_REQUEST['return_id']);
+            $on_focus = CRMEntity::getInstance($for_module);
+            // Do conditional check && call only for Custom Module at present
+            // TOOD: $on_focus->IsCustomModule is not required if save_related_module function
+            // is used for core modules as well.
+            if ($on_focus->IsCustomModule && method_exists($on_focus, 'save_related_module')) {
+                $with_module = $module;
+                $with_crmid = $this->id;
+                $on_focus->save_related_module($for_module, $for_crmid, $with_module, $with_crmid);
+            }
+        }
+        //END
+    }
+
+    function insertIntoAttachment1($id, $module, $filedata, $filename, $filesize, $filetype, $user_id)
+    {
+        $date_var = date('Y-m-d H:i:s');
+        global $current_user;
+        global $adb;
+        //global $root_directory;
+        global $log;
+
+        $ownerid = $user_id;
+
+        if ($filesize != 0) {
+            $data = base64_encode(fread(fopen($filedata, "r"), $filesize));
+        }
+
+        $current_id = $adb->getUniqueID("aicrm_crmentity");
+
+        if ($module == 'Emails') {
+            $log->info("module is " . $module);
+            $idname = 'emailid';
+            $tablename = 'emails';
+            $descname = 'description';
+        } else {
+            $idname = 'notesid';
+            $tablename = 'notes';
+            $descname = 'notecontent';
+        }
+
+        $sql = "update $tablename set filename=? where $idname=?";
+        $params = array($filename, $id);
+        $adb->pquery($sql, $params);
+
+        $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+        $params1 = array($current_id, $current_user->id, $ownerid, $module . " Attachment", '', $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+        $adb->pquery($sql1, $params1);
+
+        $sql2 = "insert into aicrm_attachments(attachmentsid, name, description, type) values(?, ?, ?, ?)";
+        $params2 = array($current_id, $filename, '', $filetype);
+        $result = $adb->pquery($sql2, $params2);
+
+        //TODO -- instead of put contents in db now we should store the file in harddisk
+
+        $sql3 = 'insert into aicrm_seattachmentsrel values(?, ?)';
+        $params3 = array($id, $current_id);
+        $adb->pquery($sql3, $params3);
+    }
+
+    /**
+     *      This function is used to upload the attachment in the server and save that attachment information in db.
+     * @param int $id - entity id to which the file to be uploaded
+     * @param string $module - the current module name
+     * @param array $file_details - array which contains the file information(name, type, size, tmp_name and error)
+     *      return void
+     */
+    function uploadAndSaveFile($id, $module, $file_details)
+    {
+        global $log;
+        $log->debug("Entering into uploadAndSaveFile($id,$module,$file_details) method.");
+
+        global $adb, $current_user;
+        global $upload_badext;
+
+        $date_var = date('Y-m-d H:i:s');
+
+        //to get the owner id
+        $ownerid = $this->column_fields['assigned_user_id'];
+        if (!isset($ownerid) || $ownerid == '')
+            $ownerid = $current_user->id;
+
+        if (isset($file_details['original_name']) && $file_details['original_name'] != null) {
+            $file_name = $file_details['original_name'];
+        } else {
+            $file_name = $file_details['name'];
+        }
+
+        // Arbitrary File Upload Vulnerability fix - Philip
+        $binFile = preg_replace('/\s+/', '_', $file_name);//replace space with _ in filename
+        $ext_pos = strrpos($binFile, ".");
+
+        $ext = substr($binFile, $ext_pos + 1);
+
+        if (in_array(strtolower($ext), $upload_badext)) {
+            $binFile .= ".txt";
+        }
+        // Vulnerability fix ends
+
+        $current_id = $adb->getUniqueID("aicrm_crmentity");
+
+        $filename = ltrim(basename(" " . $binFile)); //allowed filename like UTF-8 characters
+        $filetype = $file_details['type'];
+        $filesize = $file_details['size'];
+        $filetmp_name = $file_details['tmp_name'];
+
+        //get the file path inwhich folder we want to upload the file
+        $upload_file_path = decideFilePath();
+
+        //upload the file in server
+        $upload_status = move_uploaded_file($filetmp_name, $upload_file_path . $current_id . "_" . $binFile);
+
+        $save_file = 'true';
+        //only images are allowed for these modules
+        if ($module == 'Contacts' || $module == 'Job') {
+            $save_file = validateImageFile($file_details);
+        }
+
+        if ($save_file == 'true' && $upload_status == 'true') {
+            //This is only to update the attached filename in the aicrm_notes aicrm_table for the Notes module
+            if ($module == 'Accounts' || $module == 'Contacts' || $module == 'Products' || $module == 'KnowledgeBase' || $module == 'Announcement' || $module == 'Leads' || $module == 'Campaigns' || $module == 'Deal' || $module == 'Promotion' || $module == 'Questionnaire' || $module == 'Faq' || $module == 'Competitorproduct' || $module == 'Premuimproduct' || $module == 'Promotionvoucher' || $module =='HelpDesk') {
+                $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                $params1 = array($current_id, $current_user->id, $ownerid, $module . " Image", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+            
+            }else if($module == 'Job'){
+
+                if($file_details['fileindex'] == 'image_customer'){
+                   $delquery = 'delete aicrm_seattachmentsrel from aicrm_seattachmentsrel inner join aicrm_crmentity on aicrm_crmentity.crmid=aicrm_seattachmentsrel.attachmentsid where aicrm_crmentity.setype="Image 998" and aicrm_seattachmentsrel.crmid= ? ';
+                   $delparams = array($id);
+                   $adb->pquery($delquery, $delparams);
+                    
+                   $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                   $params1 = array($current_id, $current_user->id, $ownerid, "Image 998", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+
+                }else if($file_details['fileindex'] == 'image_user'){
+                   
+                   $delquery = 'delete aicrm_seattachmentsrel from aicrm_seattachmentsrel inner join aicrm_crmentity on aicrm_crmentity.crmid=aicrm_seattachmentsrel.attachmentsid where aicrm_crmentity.setype="Image 999" and aicrm_seattachmentsrel.crmid= ? ';
+                   $delparams = array($id);
+                   $adb->pquery($delquery, $delparams);
+
+                   $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                   $params1 = array($current_id, $current_user->id, $ownerid, "Image 999", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+
+                }else{
+                    $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                    $params1 = array($current_id, $current_user->id, $ownerid, $module." Image", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+                }
+
+            }else if($module == 'Order'){
+
+                if($file_details['fileindex'] == 'image_vendor'){
+                   $delquery = 'delete aicrm_seattachmentsrel from aicrm_seattachmentsrel inner join aicrm_crmentity on aicrm_crmentity.crmid=aicrm_seattachmentsrel.attachmentsid where aicrm_crmentity.setype="Image 997" and aicrm_seattachmentsrel.crmid= ? ';
+                   $delparams = array($id);
+                   $adb->pquery($delquery, $delparams);
+                    
+                   $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                   $params1 = array($current_id, $current_user->id, $ownerid, "Image 997", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+
+                }else{
+                    
+                    $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                    $params1 = array($current_id, $current_user->id, $ownerid, $module . " Attachment", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+                }
+
+            } else if ($module == 'Smartquestionnaire' || $module == 'Questionnairetemplate') {
+                $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                $params1 = array($current_id, $current_user->id, $ownerid, $file_details['setype'], $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+
+            } else {
+                $sql1 = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?, ?, ?, ?, ?, ?, ?)";
+                $params1 = array($current_id, $current_user->id, $ownerid, $module . " Attachment", $this->column_fields['description'], $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+            }
+
+            $adb->pquery($sql1, $params1);
+           
+            $sql2 = "insert into aicrm_attachments(attachmentsid, name, description, type, path) values(?, ?, ?, ?, ?)";
+            $params2 = array($current_id, $filename, $this->column_fields['description'], $filetype, $upload_file_path);
+
+            $result = $adb->pquery($sql2, $params2);
+
+            if ($_REQUEST['mode'] == 'edit') {
+                if ($id != '' && $_REQUEST['fileid'] != '') {
+                    $delquery = 'delete from aicrm_seattachmentsrel where crmid = ? and attachmentsid = ?';
+                    $delparams = array($id, $_REQUEST['fileid']);
+                    $adb->pquery($delquery, $delparams);
+                }
+            }
+            if ($module == 'Documents') {
+                $query = "delete from aicrm_seattachmentsrel where crmid = ?";
+                $qparams = array($id);
+                $adb->pquery($query, $qparams);
+            }
+            if ($module == 'Contacts') {
+                $att_sql = "select aicrm_seattachmentsrel.attachmentsid  from aicrm_seattachmentsrel inner join aicrm_crmentity on aicrm_crmentity.crmid=aicrm_seattachmentsrel.attachmentsid where aicrm_crmentity.setype='Contacts Image' and aicrm_seattachmentsrel.crmid=?";
+                $res = $adb->pquery($att_sql, array($id));
+                $attachmentsid = $adb->query_result($res, 0, 'attachmentsid');
+                if ($attachmentsid != '') {
+                    $delquery = 'delete from aicrm_seattachmentsrel where crmid=? and attachmentsid=?';
+                    $adb->pquery($delquery, array($id, $attachmentsid));
+                    $crm_delquery = "delete from aicrm_crmentity where crmid=?";
+                    $adb->pquery($crm_delquery, array($attachmentsid));
+                    $sql5 = 'insert into aicrm_seattachmentsrel values(?,?)';
+                    $adb->pquery($sql5, array($id, $current_id));
+                } else {
+                    $sql3 = 'insert into aicrm_seattachmentsrel values(?,?)';
+                    $adb->pquery($sql3, array($id, $current_id));
+                }
+            } else {
+                $sql3 = 'insert into aicrm_seattachmentsrel values(?,?)';
+                $adb->pquery($sql3, array($id, $current_id));
+            }
+
+            return true;
+            
+        } else {
+            $log->debug("Skip the save attachment process.");
+            return false;
+        }
+    }
+
+    /** Function to insert values in the aicrm_crmentity for the specified module
+     * @param $module -- module:: Type varchar
+     */
+    function insertIntoCrmEntity($module, $fileid = '')
+    {
+        global $adb;
+        global $current_user;
+        global $log;
+
+        if ($fileid != '') {
+            $this->id = $fileid;
+            $this->mode = 'edit';
+        }
+
+        $date_var = date('Y-m-d H:i:s');
+
+        $ownerid = $this->column_fields['assigned_user_id'];
+
+        $sql = "select ownedby from aicrm_tab where name=?";
+        $res = $adb->pquery($sql, array($module));
+        $this->ownedby = $adb->query_result($res, 0, 'ownedby');
+
+        if ($this->ownedby == 1) {
+            $log->info("module is =" . $module);
+            $ownerid = $current_user->id;
+        }
+        // Asha - Change ownerid from '' to null since its an integer field.
+        // It is empty for modules like Invoice/Quotes/SO/PO which do not have Assigned to field
+        if ($ownerid === '') $ownerid = 0;
+
+        if ($module == 'Events') {
+            $module = 'Calendar';
+        }
+        if ($this->mode == 'edit') {
+            //Insert Activity Logs (Action Edit)
+            $this->insertIntoActivity_Timeline($module,$this->id);
+
+            $description_val = from_html($this->column_fields['description'], ($insertion_mode == 'edit') ? true : false);
+
+            require('user_privileges/user_privileges_' . $current_user->id . '.php');
+            $tabid = getTabid($module);
+            if ($module == 'Events') {
+                $module = 'Calendar';
+            }
+            if ($module == "Calendar") {
+                $tabid = "16";
+            }
+            if ($is_admin == true || $profileGlobalPermission[1] == 0 || $profileGlobalPermission[2] == 0) {
+                $sql = "update aicrm_crmentity set smownerid=?,modifiedby=?,description=?, modifiedtime=? where crmid=?";
+                $params = array($ownerid, $current_user->id, $description_val, $adb->formatDate($date_var, true), $this->id);
+            
+            } else {
+                $profileList = getCurrentUserProfileList();
+                $perm_qry = "SELECT columnname FROM aicrm_field INNER JOIN aicrm_profile2field ON aicrm_profile2field.fieldid = aicrm_field.fieldid INNER JOIN aicrm_def_org_field ON aicrm_def_org_field.fieldid = aicrm_field.fieldid WHERE aicrm_field.tabid = ? AND aicrm_profile2field.visible = 0 AND aicrm_profile2field.profileid IN (" . generateQuestionMarks($profileList) . ") AND aicrm_def_org_field.visible = 0 and aicrm_field.tablename='aicrm_crmentity' and aicrm_field.displaytype in (1,3) and aicrm_field.presence in (0,2);";
+
+                $perm_result = $adb->pquery($perm_qry, array($tabid, $profileList));
+                $perm_rows = $adb->num_rows($perm_result);
+                
+                for ($i = 0; $i < $perm_rows; $i++) {
+                    $columname[] = $adb->query_result($perm_result, $i, "columnname");
+                }
+
+                if (is_array($columname) && in_array("description", $columname)) {
+                    $sql = "update aicrm_crmentity set smownerid=?,modifiedby=?,description=?, modifiedtime=? where crmid=?";
+                    $params = array($ownerid, $current_user->id, $description_val, $adb->formatDate($date_var, true), $this->id);
+                } else {
+                    $sql = "update aicrm_crmentity set smownerid=?,modifiedby=?, modifiedtime=? where crmid=?";
+                    $params = array($ownerid, $current_user->id, $adb->formatDate($date_var, true), $this->id);
+                }
+            }
+                       
+            $adb->pquery($sql, $params);
+            $sql1 = "delete from aicrm_ownernotify where crmid=?";
+            $params1 = array($this->id);
+            $adb->pquery($sql1, $params1);
+            if ($ownerid != $current_user->id) {
+                $sql1 = "insert into aicrm_ownernotify values(?,?,?)";
+                $params1 = array($this->id, $ownerid, null);
+                $adb->pquery($sql1, $params1);
+            }
+        } else {
+            //if this is the create mode and the group allocation is chosen, then do the following
+            $current_id = $adb->getUniqueID("aicrm_crmentity");
+            //Insert Activity Logs (Action Create)
+            $this->insertIntoActivity_Timeline($module, $current_id);
+
+            $_REQUEST['currentid'] = $current_id;
+            if ($current_user->id == '')
+                $current_user->id = 0;
+
+            $description_val = from_html($this->column_fields['description'], ($insertion_mode == 'edit') ? true : false);
+            $sql = "insert into aicrm_crmentity (crmid,smcreatorid,smownerid,setype,description,createdtime,modifiedtime) values(?,?,?,?,?,?,?)";
+            $params = array($current_id, $current_user->id, $ownerid, $module, $description_val, $adb->formatDate($date_var, true), $adb->formatDate($date_var, true));
+           
+            $adb->pquery($sql, $params);
+            $this->id = $current_id;
+        }
+
+    }
+
+    function insertIntoActivity_Timeline($module, $fileid = '')
+    {
+        global $adb;
+        global $current_user;
+        global $log;
+        
+        $date_var = date('Y-m-d H:i:s');
+        $c_userid = $current_user->id;
+        $tabid = getTabid($module);
+        
+        if ($module == 'Events') {
+            $module = 'Calendar';
+        }
+        
+        if ($this->mode == 'edit') {
+
+            require('user_privileges/user_privileges_' . $current_user->id . '.php');
+            $tabid = getTabid($module);
+            if ($module == "Calendar") {
+                $tabid = "16";
+            }            
+            $timeline_id = $adb->getUniqueID("aicrm_activity_timeline");
+            $_REQUEST['timeline_id'] = $timeline_id;
+            $sql = "insert into aicrm_activity_timeline (id,tabid,module,crmid,action,userid,createdtime) values(?,?,?,?,?,?,?)";
+            $params = array($timeline_id, $tabid, $module, $fileid, 'edit', $c_userid, $adb->formatDate($date_var, true));
+            $adb->pquery($sql, $params);
+
+            $this->timeline_id = $timeline_id;
+
+            if ($is_admin == true || $profileGlobalPermission[1] == 0 || $profileGlobalPermission[2] == 0) {
+                
+                $g_sql = "select * from aicrm_field where tabid = ".$tabid." and presence != 1 and tablename = 'aicrm_crmentity' and columnname in ('description','smownerid');";
+                $g_result = $adb->pquery($g_sql, array());
+                $g_rows = $adb->num_rows($g_result);
+
+                //require_once("modules/$module/$module.php");
+                //$module_focus = new $module();
+                $module_focus = CRMEntity::getInstance($module);
+                $module_focus->retrieve_entity_info($fileid,$module);
+                
+                //exit;
+                for ($i = 0; $i < $g_rows; $i++) {
+                    
+                    $columnname = $adb->query_result($g_result, $i, "fieldname");
+                    $fieldid = $adb->query_result($g_result, $i, "fieldid");
+                    
+                    
+                    if($module_focus->column_fields[$columnname] != $this->column_fields[$columnname]){
+                        $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                        $edit_params = array($timeline_id, $fieldid, '', $module_focus->column_fields[$columnname], $this->column_fields[$columnname]);
+                        $adb->pquery($sql_edit, $edit_params);
+                    }
+                }
+            } else {
+
+                $profileList = getCurrentUserProfileList();
+                
+                $perm_qry = "SELECT aicrm_field.fieldname , aicrm_field.fieldid FROM aicrm_field INNER JOIN aicrm_profile2field ON aicrm_profile2field.fieldid = aicrm_field.fieldid INNER JOIN aicrm_def_org_field ON aicrm_def_org_field.fieldid = aicrm_field.fieldid WHERE aicrm_field.tabid = ? AND aicrm_profile2field.visible = 0 AND aicrm_profile2field.profileid IN (" . generateQuestionMarks($profileList) . ") AND aicrm_def_org_field.visible = 0 and aicrm_field.tablename='aicrm_crmentity' and aicrm_field.displaytype in (1,3) and aicrm_field.presence in (0,2);";
+
+                $perm_result = $adb->pquery($perm_qry, array($tabid, $profileList));
+                $perm_rows = $adb->num_rows($perm_result);
+                
+                /*require_once("modules/$module/$module.php");
+                $module_focus = new $module();*/
+                $module_focus = CRMEntity::getInstance($module);
+                $module_focus->retrieve_entity_info($fileid,$module);
+                
+                for ($i = 0; $i < $perm_rows; $i++) {
+                    
+                    $columnname = $adb->query_result($perm_result, $i, "fieldname");
+                    $fieldid = $adb->query_result($perm_result, $i, "fieldid");
+
+                    if($module_focus->column_fields[$columnname] != $this->column_fields[$columnname]){
+                        $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                        $edit_params = array($timeline_id, $fieldid, '', $module_focus->column_fields[$columnname], $this->column_fields[$columnname]);
+                        $adb->pquery($sql_edit, $edit_params);
+                    }
+                }
+            }
+        } else {
+            $timeline_id = $adb->getUniqueID("aicrm_activity_timeline");
+            $_REQUEST['timeline_id'] = $timeline_id;
+            $sql = "insert into aicrm_activity_timeline (id,tabid,module,crmid,action,userid,createdtime) values(?,?,?,?,?,?,?)";
+            $params = array($timeline_id, $tabid, $module, $fileid, 'create', $c_userid, $adb->formatDate($date_var, true));
+            $adb->pquery($sql, $params);
+
+            $this->timeline_id = $timeline_id;
+        }
+    }
+
+    /** Function to insert values in the specifed table for the specified module
+     * @param $table_name -- table name:: Type varchar
+     * @param $module -- module:: Type varchar
+     */
+    function insertIntoEntityTable($table_name, $module, $fileid = '')
+    {
+        global $log;
+        global $current_user, $app_strings;
+        $log->info("function insertIntoEntityTable " . $module . ' aicrm_table name ' . $table_name);
+        global $adb;
+        $insertion_mode = $this->mode;
+
+        //Checkin whether an entry is already is present in the aicrm_table to update
+        if ($insertion_mode == 'edit') {
+            $tablekey = $this->tab_name_index[$table_name];
+            // Make selection on the primary key of the module table to check.
+            $check_query = "select $tablekey from $table_name where $tablekey=?";
+            $check_result = $adb->pquery($check_query, array($this->id));
+            $num_rows = $adb->num_rows($check_result);
+
+            if ($num_rows <= 0) {
+                $insertion_mode = '';
+            }
+        }
+
+        $tabid = getTabid($module);
+        if ($module == 'Calendar' && $this->column_fields["activitytype"] != null && $this->column_fields["activitytype"] != 'Task') {
+            $tabid = getTabid('Events');
+        }
+        
+        if ($insertion_mode == 'edit') {
+            $update = array();
+            $update_params = array();
+            require('user_privileges/user_privileges_' . $current_user->id . '.php');
+            if ($is_admin == true || $profileGlobalPermission[1] == 0 || $profileGlobalPermission[2] == 0) {//echo "1";exit;
+                $sql = "select * from aicrm_field where tabid in (" . generateQuestionMarks($tabid) . ") and tablename=? and displaytype in (1,3) and presence in (0,2) group by columnname";
+                $params = array($tabid, $table_name);
+            } else {
+                $profileList = getCurrentUserProfileList();
+
+                if (count($profileList) > 0) {
+                    $sql = "SELECT *
+			  			FROM aicrm_field
+			  			INNER JOIN aicrm_profile2field
+			  			ON aicrm_profile2field.fieldid = aicrm_field.fieldid
+			  			INNER JOIN aicrm_def_org_field
+			  			ON aicrm_def_org_field.fieldid = aicrm_field.fieldid
+			  			WHERE aicrm_field.tabid = ?
+			  			AND aicrm_profile2field.visible = 0
+			  			AND aicrm_profile2field.profileid IN (" . generateQuestionMarks($profileList) . ")
+			  			AND aicrm_def_org_field.visible = 0 and aicrm_field.tablename=? and aicrm_field.displaytype in (1,3) and aicrm_field.presence in (0,2) group by columnname";
+
+                    $params = array($tabid, $profileList, $table_name);
+                } else {
+                    $sql = "SELECT *
+			  			FROM aicrm_field
+			  			INNER JOIN aicrm_profile2field
+			  			ON aicrm_profile2field.fieldid = aicrm_field.fieldid
+			  			INNER JOIN aicrm_def_org_field
+			  			ON aicrm_def_org_field.fieldid = aicrm_field.fieldid
+			  			WHERE aicrm_field.tabid = ?
+			  			AND aicrm_profile2field.visible = 0
+			  			AND aicrm_def_org_field.visible = 0 and aicrm_field.tablename=? and aicrm_field.displaytype in (1,3) and aicrm_field.presence in (0,2) group by columnname";
+
+                    $params = array($tabid, $table_name);
+                }
+            }
+
+        } else {
+            $table_index_column = $this->tab_name_index[$table_name];
+            if ($table_index_column == 'id' && $table_name == 'aicrm_users') {
+                $currentuser_id = $adb->getUniqueID("aicrm_users");
+                $this->id = $currentuser_id;
+            }
+            $column = array($table_index_column);
+
+            if ($table_name == "aicrm_opportunitycf" || $table_name == "aicrm_campaignpointcf" || $table_name == "aicrm_activityscf" || $table_name == "aicrm_knowledgebasecf" || $table_name == "aicrm_quotationcf" || $table_name == "aicrm_pricelistscf" || $table_name == "aicrm_jobscf" || $table_name == "aicrm_smartsmscf"){
+
+            }
+
+            $value = array($this->id);
+            $sql = "select * from aicrm_field where tabid=? and tablename=? and displaytype in (1,3,4) and aicrm_field.presence in (0,2)";
+            $params = array($tabid, $table_name);
+        }
+
+        $result = $adb->pquery($sql, $params);
+        $noofrows = $adb->num_rows($result);
+        //echo "<pre>"; print_r($noofrows); echo "</pre>";
+        //echo "<pre>"; print_r($result); echo "</pre>"; exit;
+        $field_check = array();
+
+        for ($i = 0; $i < $noofrows; $i++) {
+            $fieldname = $adb->query_result($result, $i, "fieldname");
+            $columname = $adb->query_result($result, $i, "columnname");
+            $uitype = $adb->query_result($result, $i, "uitype");
+            $generatedtype = $adb->query_result($result, $i, "generatedtype");
+
+            $fieldid = $adb->query_result($result, $i, "fieldid");
+
+            $field_check[$i]['fieldname'] = $fieldname;
+            $field_check[$i]['fieldid'] = $fieldid;
+            $field_check[$i]['uitype'] = $uitype;
+
+            if ($uitype == 4 && $insertion_mode != 'edit') {
+                $this->column_fields[$fieldname] = $this->setModuleSeqNumber("increment", $module);
+                $typeofdata = $adb->query_result($result, $i, "typeofdata");
+                $typeofdata_array = explode("~", $typeofdata);
+                $datatype = $typeofdata_array[0];
+                $fldvalue = $this->column_fields[$fieldname];
+            }
+            
+            if (isset($this->column_fields[$fieldname])) {
+
+                if ($uitype == 56) {
+                    if ($this->column_fields[$fieldname] == 'on' || $this->column_fields[$fieldname] == 1) {
+                        $fldvalue = '1';
+                    } else {
+                        $fldvalue = '0';
+                    }
+
+                } elseif ($uitype == 15 || $uitype == 16) {
+
+                    if ($this->column_fields[$fieldname] == $app_strings['LBL_NOT_ACCESSIBLE']) {
+                        //If the value in the request is Not Accessible for a picklist, the existing value will be replaced instead of Not Accessible value.
+                        $sql = "select $columname from  $table_name where " . $this->tab_name_index[$table_name] . "=?";
+                        $res = $adb->pquery($sql, array($this->id));
+                        $pick_val = $adb->query_result($res, 0, $columname);
+                        $fldvalue = $pick_val;
+                    } else {
+                        $fldvalue = $this->column_fields[$fieldname];
+                    }
+                } elseif ($uitype == 33) {
+                    if (is_array($this->column_fields[$fieldname])) {
+                        $field_list = implode(' |##| ', $this->column_fields[$fieldname]);
+                    } else {
+                        $field_list = $this->column_fields[$fieldname];
+                    }
+                    $fldvalue = $field_list;
+                } elseif ($uitype == 5 || $uitype == 6 || $uitype == 23) {
+                    if ($_REQUEST['action'] == 'Import') {
+                        $fldvalue = $this->column_fields[$fieldname];
+                    } else {
+                        //Added to avoid function call getDBInsertDateValue in ajax save
+                        if (isset($current_user->date_format) && $_REQUEST['ajxaction'] != 'DETAILVIEW') {
+                            $fldvalue = getDBInsertDateValue($this->column_fields[$fieldname]);
+                        } elseif (isset($current_user->date_format) && $_REQUEST['ajxaction'] == 'DETAILVIEW') {
+                            $fldvalue = getValidDBInsertDateValue($this->column_fields[$fieldname]);
+                        } else {
+                            $fldvalue = $this->column_fields[$fieldname];
+                        }
+                    }
+                } elseif ($uitype == 7) {
+                    //strip out the spaces and commas in numbers if given ie., in amounts there may be ,
+                    $fldvalue = str_replace(",", "", $this->column_fields[$fieldname]);//trim($this->column_fields[$fieldname],",");
+
+                } elseif ($uitype == 26) {
+                    if (empty($this->column_fields[$fieldname])) {
+                        $fldvalue = 1; //the documents will stored in default folder
+                    } else {
+                        $fldvalue = $this->column_fields[$fieldname];
+                    }
+                } elseif ($uitype == 28) {
+                    if ($this->column_fields[$fieldname] == null) {
+                        $fileQuery = $adb->pquery("SELECT filename from aicrm_notes WHERE notesid = ?", array($this->id));
+                        $fldvalue = null;
+                        if (isset($fileQuery)) {
+                            $rowCount = $adb->num_rows($fileQuery);
+                            if ($rowCount > 0) {
+                                $fldvalue = $adb->query_result($fileQuery, 0, 'filename');
+                            }
+                        }
+                    } else {
+                        $fldvalue = $this->column_fields[$fieldname];
+                    }
+                } elseif ($uitype == 8) {
+                    $this->column_fields[$fieldname] = rtrim($this->column_fields[$fieldname], ',');
+                    $ids = explode(',', $this->column_fields[$fieldname]);
+                    $json = new Zend_Json();
+                    $fldvalue = $json->encode($ids);
+                } elseif ($uitype == 12) {
+                    $query = "SELECT email1 FROM aicrm_users WHERE id = ?";
+                    $res = $adb->pquery($query, array($current_user->id));
+                    $rows = $adb->num_rows($res);
+                    if ($rows > 0) {
+                        $fldvalue = $adb->query_result($res, 0, 'email1');
+                    }
+                } elseif ($uitype == 71 && $generatedtype == 2) { // Convert currency to base currency value before saving for custom fields of type currency
+                    $currency_id = $current_user->currency_id;
+                    $curSymCrate = getCurrencySymbolandCRate($currency_id);
+                    $fldvalue = convertToDollar($this->column_fields[$fieldname], $curSymCrate['rate']);
+                } else {
+                    $fldvalue = $this->column_fields[$fieldname];
+                }
+                if ($uitype != 33 && $uitype != 8)
+                    $fldvalue = from_html($fldvalue, ($insertion_mode == 'edit') ? true : false);
+            } else {
+                $fldvalue = '';
+            }
+
+            if ($fldvalue == '') {
+                $fldvalue = $this->get_column_value($columname, $fldvalue, $fieldname, $uitype, $datatype);
+            }
+
+            if ($insertion_mode == 'edit') {
+                if ($table_name != 'aicrm_ticketcomments' && $uitype != 4) {
+                    array_push($update, $columname . "=?");
+                    array_push($update_params, $fldvalue);
+                }
+            } else {
+                array_push($column, $columname);
+                array_push($value, $fldvalue);
+                if ($table_name == "aicrm_activityscf" || $table_name == "aicrm_knowledgebasecf" || $table_name == "aicrm_quotationcf" || $table_name == "aicrm_servicerequestscf" || $table_name == "aicrm_smartsmscf" || $table_name == "aicrm_privilegescf") {
+                }
+            }
+
+        }
+        
+        $insert_flag = "";
+
+        if ($insertion_mode == 'edit') {
+
+            $this->insertIntoActivity_Timeline_detail($field_check, $module, $fileid);
+
+            $insert_flag = "0";
+            if ($_REQUEST['module'] == 'Potentials') {
+                $dbquery = 'select sales_stage from aicrm_potential where potentialid = ?';
+                $sales_stage = $adb->query_result($adb->pquery($dbquery, array($this->id)), 0, 'sales_stage');
+                if ($sales_stage != $_REQUEST['sales_stage'] && $_REQUEST['sales_stage'] != '') {
+                    $date_var = date('YmdHis');
+                    $closingdate = ($_REQUEST['ajxaction'] == 'DETAILVIEW') ? $this->column_fields['closingdate'] : getDBInsertDateValue($this->column_fields['closingdate']);
+                    $sql = "insert into aicrm_potstagehistory values(?,?,?,?,?,?,?,?)";
+                    $params = array('', $this->id, $this->column_fields['amount'], decode_html($sales_stage), $this->column_fields['probability'], 0, $adb->formatDate($closingdate, true), $adb->formatDate($date_var, true));
+                    $adb->pquery($sql, $params);
+                }
+            } elseif ($_REQUEST['module'] == 'Quotes') {
+                //added to update the history for PO, SO, Quotes and Invoice
+                $history_field_array = Array(
+                    "Quotes" => "quotation_status",
+                );
+
+                $inventory_module = $_REQUEST['module'];
+
+                if ($_REQUEST['ajxaction'] == 'DETAILVIEW')//if we use ajax edit
+                {
+                    if ($inventory_module == "PurchaseOrder")
+                        $relatedname = getVendorName($this->column_fields['vendor_id']);
+                    else
+                        $relatedname = getAccountName($this->column_fields['account_id']);
+
+                    $total = $this->column_fields['hdnGrandTotal'];
+                } else//using edit button and save
+                {
+                    if ($inventory_module == "PurchaseOrder")
+                        $relatedname = $_REQUEST["vendor_name"];
+                    else
+                        $relatedname = $_REQUEST["account_name"];
+
+                    $total = $_REQUEST['total'];
+                }
+
+                if ($this->column_fields["$history_field_array[$inventory_module]"] == $app_strings['LBL_NOT_ACCESSIBLE']) {
+
+                    //If the value in the request is Not Accessible for a picklist, the existing value will be replaced instead of Not Accessible value.
+                    $his_col = $history_field_array[$inventory_module];
+                    $his_sql = "select $his_col from  $this->table_name where " . $this->table_index . "=?";
+                    $his_res = $adb->pquery($his_sql, array($this->id));
+                    $status_value = $adb->query_result($his_res, 0, $his_col);
+                    $stat_value = $status_value;
+                } else {
+                    $stat_value = $this->column_fields["$history_field_array[$inventory_module]"];
+                }
+                $oldvalue = getSingleFieldValue($this->table_name, $history_field_array[$inventory_module], $this->table_index, $this->id);
+                if ($this->column_fields["$history_field_array[$inventory_module]"] != '' && $oldvalue != $stat_value) {
+                    addInventoryHistory($inventory_module, $this->id, $relatedname, $total, $stat_value);
+                }
+            }
+            //Check done by Don. If update is empty the the query fails
+            if (count($update) > 0) {
+
+                if ($_REQUEST['module'] == 'Quotes') {
+                    $sql_q = "select quotation_status from " . $table_name . " where " . $this->tab_name_index[$table_name] . "=" . $this->id;
+                    $query = mysql_query($sql_q);
+                    $arr = mysql_fetch_array($query);
+                    $quotation_status = $arr['quotation_status'];
+                    if ($quotation_status == 'ไม่อนุมัติใบเสนอราคา' && $this->column_fields["quotation_status"] == 'เปิดใบเสนอราคา') {
+                        mysql_query('DELETE FROM tbt_quotes_approve WHERE crmid=' . $this->id);
+                    }
+                }
+
+                $sql1 = "update $table_name set " . implode(",", $update) . " where " . $this->tab_name_index[$table_name] . "=?";
+                array_push($update_params, $this->id);
+
+                $new_update_params = [];
+                foreach($update_params as $params){
+                    $new_update_params[] = htmlspecialchars_decode($params);
+                }
+
+                $adb->pquery($sql1, $new_update_params);
+
+                if (isset($_REQUEST['module'])){
+                    $this->insert_log($current_user->id,$sql1,$update_params,$this->id, "Update", $_REQUEST['module']);
+                }
+            }
+
+        } else {
+            
+            $value = "'" . implode("','", str_replace("'","''",$value)) . "'";
+            $sql1 = "insert into $table_name(" . implode(",", $column) . ") values(" . $value . ")";
+            // echo $sql1."<br>";
+            $adb->pquery($sql1, "");
+
+            $insert_flag = "1";
+            if ($table_name == "aicrm_invoice_recurring_info") {
+                $insert_flag = "0";
+            }
+
+            if (isset($_REQUEST['module'])){
+                $this->insert_log($current_user->id,$sql1,"","", "Insert", $_REQUEST['module']);
+            }
+        }
+        // exit;
+        //#################### AUTO RUN ###################
+        if ($insert_flag == "1") {
+            if ($_REQUEST['module'] == "Accounts" && $table_name == "aicrm_account") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("CLA", "Accounts", "6");
+                $this->column_fields['account_no'] = str_replace('-','',$cd);
+                $sqlupdate = " update  aicrm_account set account_no = '" . str_replace('-','',$cd) . "' where  accountid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Products" && $table_name == "aicrm_products") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PRO" . substr((date("Y") + 543), -2).date('m'), "Products", "6");
+                $sqlupdate = " update  aicrm_products set product_no = '" . $cd . "' where  productid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Contacts" && $table_name == "aicrm_contactdetails") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("CON" . substr((date("Y") + 543), -2).date('m'), "Contacts", "6");
+                $this->column_fields['contact_no'] = $cd;
+                $sqlupdate = " update   aicrm_contactdetails set contact_no = '" . $cd . "' where  contactid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "HelpDesk" && $table_name == "aicrm_ticketcf") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("CASE" . substr((date("Y") + 543), -2).date('m'), "HelpDesk", "4");
+                $sqlupdate = " update aicrm_troubletickets set ticket_no = '" . $cd . "' where  ticketid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Quotes" && $table_name == "aicrm_quotes") {
+
+                if (isset($_REQUEST["revise_from"]) && $_REQUEST["revise_from"] != "") {
+                    $sql = "select quote_no as quote_no from aicrm_quotes where quoteid='" . $_REQUEST["revise_from"] . "' ";
+                    $data_crm = $adb->pquery($sql, array());
+                    $quote_no = $adb->query_result($data_crm, 0, 'quote_no');
+
+                    $quote_no_revise = explode("-R", $quote_no);
+                    if (!empty($quote_no_revise["1"])) {
+                        $autorun = $quote_no_revise["1"] + 1;
+                    } else {
+                        $autorun = "1";
+                    }
+                    $quote_no = $quote_no_revise["0"] . "-R" . $autorun;
+                    $sql = "update aicrm_quotes set  quote_no='" . $quote_no . "' where aicrm_quotes.quoteid = '" . $this->id . "'  ";
+                    $query_data = $adb->pquery($sql, "");
+                } else {
+                    include_once("include/myFunction.php");
+                    //$cd = get_autorun_quotes("QUO-" .substr((date("Y") + 543), -2), date("m"), date("d"), "Quotes", "5");
+                    $cd = get_autorun("QUO" . substr((date("Y") + 543), -2).date("m"), "Quotes", "6");
+                    $sqlupdate = " update  aicrm_quotes set quote_no = '" . $cd . "' where  quoteid= '" . $this->id . "' ";
+                    $adb->pquery($sqlupdate, array());
+                }
+
+            } else if ($_REQUEST['module'] == "Projects" && $table_name == "aicrm_projectscf") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("POD" . substr((date("Y") + 543), -2).date('m'), "Projects", "6");
+                $sqlupdate = " update  aicrm_projects set projects_no = '" . $cd . "' where  projectsid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Leads" && $table_name == "aicrm_leaddetails") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("LED" . substr((date("Y") + 543), -2).date('m'), "Leads", "6");
+                $sqlupdate = " update  aicrm_leaddetails set lead_no = '" . $cd . "' where leadid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Activitys" && $table_name == "aicrm_activitys") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SOD" . substr((date("Y") + 543), -2).date('m'), "Activitys", "4");
+                $sqlupdate = " update  aicrm_activitys set activitys_no = '" . $cd . "' where activitysid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Opportunity" && $table_name == "aicrm_opportunity") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("OPP" . substr((date("Y") + 543), -2), "Opportunity", "4");
+                $sqlupdate = " update  aicrm_opportunity set opportunity_no = '" . $cd . "' where opportunityid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Campaigns" && $table_name == "aicrm_campaign") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("CAM" . substr((date("Y") + 543), -2).date('m'), "Campaigns", "6");
+                $sqlupdate = " update  aicrm_campaign set campaign_no = '" . $cd . "' where campaignid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "SmartSms" && $table_name == "aicrm_smartsms") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SMS" . substr((date("Y") + 543), -2).date('m'), "SmartSms", "4");
+                $sqlupdate = " update  aicrm_smartsms set smartsms_no = '" . $cd . "' where smartsmsid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Smartemail" && $table_name == "aicrm_smartemail") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SME" . substr((date("Y") + 543), -2).date('m'), "Smartemail", "4");
+                $sqlupdate = " update  aicrm_smartemail set smartemail_no = '" . $cd . "' where smartemailid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "PriceList" && $table_name == "aicrm_pricelists") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PRI" . substr((date("Y") + 543), -2).date('m'), "PriceList", "6");
+                $sqlupdate = " update  aicrm_pricelists set pricelist_no = '" . $cd . "' where pricelistid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Job" && $table_name == "aicrm_jobs") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("JOB" . substr((date("Y") + 543), -2).date('m'), "Job", "6");
+                $sqlupdate = " update  aicrm_jobs set job_no = '" . $cd . "' where jobid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Competitor" && $table_name == "aicrm_competitor") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("COM" . substr((date("Y") + 543), -2).date('m'), "Competitor", "6");
+                $sqlupdate = " update  aicrm_competitor set competitor_no = '" . $cd . "' where competitorid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Order" && $table_name == "aicrm_order") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun_order("QU" . substr((date("Y") + 543), -2).date("m"), "Order", "4");
+                $sqlupdate = " update aicrm_order set order_no = '" . $cd . "' where orderid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+                
+            } else if ($_REQUEST['module'] == "KnowledgeBase" && $table_name == "aicrm_knowledgebase") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("KM" . substr((date("Y") + 543), -2), "KnowledgeBase", "4");
+                $sqlupdate = " update  aicrm_knowledgebase set knowledgebase_no = '" . $cd . "' where  knowledgebaseid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Announcement" && $table_name == "aicrm_announcement") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("ANNT" . substr((date("Y") + 543), -2), "Announcement", "4");
+                $sqlupdate = " update  aicrm_announcement set announcement_no = '" . $cd . "' where  announcementid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Deal" && $table_name == "aicrm_deal") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("DEL" . substr((date("Y") + 543), -2).date('m'), "Deal", "6");
+                $this->column_fields['deal_no'] = $cd;
+                $sqlupdate = " update aicrm_deal set deal_no = '" . $cd . "' where  dealid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Questionnaire" && $table_name == "aicrm_questionnaire") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("QUE" . substr((date("Y") + 543), -2), "Questionnaire", "4");
+                $this->column_fields['questionnaire_no'] = $cd;
+                $sqlupdate = " update aicrm_questionnaire set questionnaire_no = '" . $cd . "' where  questionnaireid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Questionnairetemplate" && $table_name == "aicrm_questionnairetemplate") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("QUET" . substr((date("Y") + 543), -2), "Questionnairetemplate", "4");
+                $this->column_fields['questionnairetemplate_no'] = $cd;
+                $sqlupdate = " update aicrm_questionnairetemplate set questionnairetemplate_no = '" . $cd . "' where  questionnairetemplateid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Questionnaireanswer" && $table_name == "aicrm_questionnaireanswer") {
+                include_once "include/myFunction.php";
+                $cd = get_autorun("QUE" . substr((date("Y") + 543), -2) . date('m'), "Questionnaireanswer", "4");
+                $this->column_fields['questionnaireanswer_no'] = $cd;
+                $sqlupdate = " update aicrm_questionnaireanswer set questionnaireanswer_no = '" . $cd . "' where  questionnaireanswerid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Promotion" && $table_name == "aicrm_promotion") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PRO" . substr((date("Y") + 543), -2).date('m'), "Promotion", "6");
+                $this->column_fields['promotion_no'] = $cd;
+                $sqlupdate = " update aicrm_promotion set promotion_no = '" . $cd . "' where  promotionid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Voucher" && $table_name == "aicrm_voucher") {
+                include_once("include/myFunction.php");
+                //$cd = get_autorun("VOC" . substr((date("Y") + 543), -2).date('m'), "Voucher", "6");
+                $cd = generateRandomString(15);
+                $this->column_fields['voucher_no'] = $cd;
+                $sqlupdate = " update aicrm_voucher set voucher_no = '" . $cd . "' where  voucherid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Promotionvoucher" && $table_name == "aicrm_promotionvoucher") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PRO" . substr((date("Y") + 543), -2).date('m'), "Promotionvoucher", "6");
+                $this->column_fields['promotionvoucher_no'] = $cd;
+                $sqlupdate = " update aicrm_promotionvoucher set promotionvoucher_no = '" . $cd . "' where  promotionvoucherid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Competitorproduct" && $table_name == "aicrm_competitorproduct") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PRD" . substr((date("Y") + 543), -2). date('m'), "Competitorproduct", "6");
+                $this->column_fields['competitorproduct_no'] = $cd;
+                $sqlupdate = " update aicrm_competitorproduct set competitorproduct_no = '" . $cd . "' where  competitorproductid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Premuimproduct" && $table_name == "aicrm_premuimproduct") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("PMD" . substr((date("Y") + 543), -2). date('m'), "Premuimproduct", "6");
+                $this->column_fields['premuimproduct_no'] = $cd;
+                $sqlupdate = " update aicrm_premuimproduct set premuimproduct_no = '" . $cd . "' where  premuimproductid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Servicerequest" && $table_name == "aicrm_servicerequest") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SVR" . substr((date("Y") + 543), -2). date('m'), "Servicerequest", "6");
+                $this->column_fields['servicerequest_no'] = $cd;
+                $sqlupdate = " update aicrm_servicerequest set servicerequest_no = '" . $cd . "' where  servicerequestid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Serial" && $table_name == "aicrm_serial") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SER" . substr((date("Y") + 543), -2). date('m'), "Serial", "6");
+                $this->column_fields['serial_no'] = $cd;
+                $sqlupdate = " update aicrm_serial set serial_no = '" . $cd . "' where serialid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Seriallist" && $table_name == "aicrm_seriallist") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SEL" . substr((date("Y") + 543), -2). date('m'), "Seriallist", "6");
+                $this->column_fields['seriallist_no'] = $cd;
+                $sqlupdate = " update aicrm_seriallist set seriallist_no = '" . $cd . "' where seriallistid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Inspection" && $table_name == "aicrm_inspection") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("INS" . substr((date("Y") + 543), -2). date('m'), "Inspection", "6");
+                $this->column_fields['inspection_no'] = $cd;
+                $sqlupdate = " update aicrm_inspection set inspection_no = '" . $cd . "' where  inspectionid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Inspectiontemplate" && $table_name == "aicrm_inspectiontemplate") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("INT" . substr((date("Y") + 543), -2). date('m'), "Inspectiontemplate", "4");
+                $this->column_fields['inspectiontemplate_no'] = $cd;
+                $sqlupdate = " update aicrm_inspectiontemplate set inspectiontemplate_no = '" . $cd . "' where  inspectiontemplateid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Salesorder" && $table_name == "aicrm_salesorder") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SOD" . substr((date("Y") + 543), -2). date('m'), "Salesorder", "6");
+                $this->column_fields['salesorder_no'] = $cd;
+                $sqlupdate = " update aicrm_salesorder set salesorder_no = '" . $cd . "' where  salesorderid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Point" && $table_name == "aicrm_point") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("POI" . substr((date("Y") + 543), -2). date('m'), "Point", "6");
+                $this->column_fields['point_no'] = $cd;
+                $sqlupdate = " update aicrm_point set point_no = '" . $cd . "' where  pointid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Redemption" && $table_name == "aicrm_redemption") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("RDT" . substr((date("Y") + 543), -2). date('m'), "Redemption", "6");
+                $this->column_fields['redemption_no'] = $cd;
+                $sqlupdate = " update aicrm_redemption set redemption_no = '" . $cd . "' where redemptionid= '".$this->id."'";
+                $adb->pquery($sqlupdate, array());
+            
+            } else if ($_REQUEST['module'] == "Expense" && $table_name == "aicrm_expense") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("EXP" . substr((date("Y") + 543), -2). date('m'), "Expense", "6");
+                $this->column_fields['redemption_no'] = $cd;
+                $sqlupdate = " update aicrm_expense set expense_no = '" . $cd . "' where expenseid= '".$this->id."'";
+                $adb->pquery($sqlupdate, array());
+
+            } else if ($_REQUEST['module'] == "Marketingtools" && $table_name == "aicrm_marketingtools") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("MKTT" . substr((date("Y")), -2). date('m'), "Marketingtools", "4");
+                $this->column_fields['redemption_no'] = $cd;
+                $sqlupdate = " update aicrm_marketingtools set marketingtools_no = '" . $cd . "' where marketingtoolsid= '".$this->id."'";
+                $adb->pquery($sqlupdate, array());
+
+			} else if ($_REQUEST['module'] == "Purchasesorder" && $table_name == "aicrm_purchasesorder") {
+                include_once("include/myFunction.php");
+                $sql = "SELECT aicrm_config_vendorbuyer.prefix_po FROM aicrm_purchasesorder
+                LEFT JOIN aicrm_config_vendorbuyer ON  aicrm_purchasesorder.buyer = aicrm_config_vendorbuyer.`name`
+                WHERE purchasesorderid='" . $this->id . "' limit 1";
+                $data_crm = $adb->pquery($sql, array());
+                $prefix_po = $adb->query_result($data_crm, 0, 'prefix_po');
+
+                $prefix = "";
+                if ($prefix_po != ''){
+                    $prefix = $prefix_po;
+                }else{
+                    $prefix = "PO";
+                }
+
+                $cd = get_autorun($prefix . date('ym'), "Purchasesorder", "4");
+                $sqlupdate = " update  aicrm_purchasesorder set purchasesorder_no = '" . $cd . "' where purchasesorderid = '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+            } else if ($_REQUEST['module'] == "Samplerequisition" && $table_name == "aicrm_samplerequisition") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("SR" . substr(date("Y"), -2). date('m'), "Samplerequisition", "4");
+                $this->column_fields['samplerequisition_no'] = $cd;
+                $sqlupdate = " update aicrm_samplerequisition set samplerequisition_no = '" . $cd . "' where samplerequisitionid= '".$this->id."'";
+                $adb->pquery($sqlupdate, array());
+            }
+
+        }
+        //#################### AUTO RUN ###################
+    
+    }
+
+    function insertIntoActivity_Timeline_detail($field_check=array(),$module,$fileid=''){
+
+        global $adb;
+        global $current_user;
+        global $log;
+
+        $module_focus = CRMEntity::getInstance($module);
+        $module_focus->retrieve_entity_info($this->id,$module);
+        $flag_insert = "0";
+        foreach ($field_check as $key => $value) {
+            
+            if($value['uitype'] == 5){
+                $fldvalue = getDBInsertDateValue($this->column_fields[$value['fieldname']]);
+
+                if($fldvalue ==''){
+                    $fldvalue = '0000-00-00'; //Set Format Database
+                }
+                if($fldvalue != $module_focus->column_fields[$value['fieldname']]){
+                    $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                    $edit_params = array($this->timeline_id, $value['fieldid'], '', $module_focus->column_fields[$value['fieldname']], $fldvalue);
+                    $adb->pquery($sql_edit, $edit_params);
+                    $flag_insert = "1";  
+                }
+            }else if($value['uitype'] == 33){
+                if (is_array($this->column_fields[$value['fieldname']])) {
+                    $field_33 = implode(' |##| ', $this->column_fields[$value['fieldname']]);
+                } else {
+                    $field_33 = $this->column_fields[$value['fieldname']];
+                }
+                $fldvalue_33 = $field_33;
+                
+                if($fldvalue_33 != $module_focus->column_fields[$value['fieldname']]){
+                    $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                    $edit_params = array($this->timeline_id, $value['fieldid'], '', $module_focus->column_fields[$value['fieldname']], $fldvalue_33);
+                    $adb->pquery($sql_edit, $edit_params);
+                    $flag_insert = "1"; 
+                }
+            }else if($value['uitype'] == 51){
+
+                if($this->column_fields[$value['fieldname']] == '' || $this->column_fields[$value['fieldname']] == 0){
+                    $this->column_fields[$value['fieldname']] = 0;
+                }
+                
+                if($module_focus->column_fields[$value['fieldname']] != $this->column_fields[$value['fieldname']]){
+                    $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                    $edit_params = array($this->timeline_id, $value['fieldid'], '', $module_focus->column_fields[$value['fieldname']], $this->column_fields[$value['fieldname']]);
+                    $adb->pquery($sql_edit, $edit_params);
+                    $flag_insert = "1"; 
+                }
+            }else if($value['uitype'] == 56){
+
+                if($this->column_fields[$value['fieldname']] == 'on' || $this->column_fields[$value['fieldname']] == 1){
+                    $this->column_fields[$value['fieldname']] = 1;
+                }else{
+                    $this->column_fields[$value['fieldname']] = 0;
+                }
+                
+                if($module_focus->column_fields[$value['fieldname']] != $this->column_fields[$value['fieldname']]){
+                    $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                    $edit_params = array($this->timeline_id, $value['fieldid'], '', $module_focus->column_fields[$value['fieldname']], $this->column_fields[$value['fieldname']]);
+                    $adb->pquery($sql_edit, $edit_params);
+                    $flag_insert = "1"; 
+                }
+            }else if($module_focus->column_fields[$value['fieldname']] != $this->column_fields[$value['fieldname']]){
+                $sql_edit = "insert into aicrm_activity_timeline_detail (activitytimelineid,fieldid,sequence,old_value,new_value) values(?,?,?,?,?);";
+                $edit_params = array($this->timeline_id, $value['fieldid'], '', $module_focus->column_fields[$value['fieldname']], $this->column_fields[$value['fieldname']]);
+                $adb->pquery($sql_edit, $edit_params);
+                $flag_insert = "1"; 
+            }
+
+        }
+        //echo $flag_insert;
+        /*if($flag_insert == "0"){
+            $sql_del = "delete from aicrm_activity_timeline where id = ?;";
+            $del_params = array($this->timeline_id);
+            $adb->pquery($sql_del, $del_params);
+        }*/
+        
+    }
+
+    function whomToSendMail($module, $insertion_mode, $assigntype)
+    {
+
+        global $adb, $mod_strings;
+        global $old_user_id1;
+        $HELPDESK_SUPPORT_EMAIL_ID = 'support_crm@aisyst.com';
+        $HELPDESK_SUPPORT_NAME = 'Customer Service';
+        $groupid = vtlib_purify($_REQUEST['assigned_group_id']);
+        $query = "select smcreatorid from aicrm_crmentity  where crmid=?";
+        $params = array($this->id);
+        $data_smcreatorid = $adb->pquery($query, $params);
+        $user_creatorid = $adb->query_result($data_smcreatorid, 0, 'smcreatorid');
+
+        $query = "select email1 from aicrm_users  where id=?";
+        $params = array($user_creatorid);
+        $data_user1 = $adb->pquery($query, $params);
+        $user_email_create = $adb->query_result($data_user1, 0, 'email1');
+
+        if ($module == "HelpDesk") {
+            $query = "
+			select
+			t.title as sub,a.name as parent_name,
+			t.case_status as status,
+			crm.description as description,'" . $insertion_mode . "',
+			t.*,tcf.*,crm.smcreatorid
+			from aicrm_troubletickets t
+			left join aicrm_ticketcf tcf on t.ticketid=tcf.ticketid
+			left join aicrm_crmentity crm on crm.crmid=t.ticketid
+			left join aicrm_users usr on usr.id=crm.smownerid
+			left join (SELECT t.ticketid as ticketid,
+			CASE WHEN if( isnull(acc.accountid) ,'',acc.accountid) = '' THEN (CASE WHEN if( isnull(con.contactid) ,'',con.contactid) = '' THEN '' ELSE CONCAT(con.firstname,' ',con.lastname) END) ELSE acc.accountname  END as name,
+			
+			CASE WHEN if( isnull(acc.accountid) ,'',acc.accountid) = '' THEN (CASE WHEN if( isnull(con.contactid) ,'',con.contactid) = '' THEN '' ELSE CONCAT(usrc.first_name,' ',usrc.last_name) END) ELSE CONCAT(usra.first_name,' ',usra.last_name)  END as assign_name,
+			CASE WHEN if( isnull(acc.accountid) ,'',acc.accountid) = '' THEN (CASE WHEN if( isnull(con.contactid) ,'',con.contactid) = '' THEN '' ELSE CONCAT(conadd.mailingstreet,' ',conadd.mailingcity,' ',conadd.mailingpobox,' ',conadd.mailingpobox) END) ELSE '' END as address
+			FROM aicrm_troubletickets t
+
+			left join aicrm_account acc on t.accountid=acc.accountid
+			left join aicrm_accountbillads abill on  acc.accountid=abill.accountaddressid
+			left join aicrm_contactdetails con on t.contactid=con.contactid
+			left join aicrm_contactaddress conadd on conadd.contactaddressid=con.contactid
+			left join aicrm_crmentity crma on crma.crmid=acc.accountid
+			left join aicrm_users usra on usra.id=crma.smownerid
+			left join aicrm_crmentity crmc on crmc.crmid=con.contactid
+			left join aicrm_users usrc on usrc.id=crmc.smownerid
+			where t.ticketid=?)as a
+			on t.ticketid=a.ticketid
+			where crm.deleted='0'
+			and t.ticketid=?";
+            /*CASE WHEN if( isnull(acc.accountid) ,'',acc.accountid) = '' THEN (CASE WHEN if( isnull(con.contactid) ,'',con.contactid) = '' THEN '' ELSE con.phone END) ELSE acc.phone  END as phone,
+            CASE WHEN if( isnull(acc.accountid) ,'',acc.accountid) = '' THEN (CASE WHEN if( isnull(con.contactid) ,'',con.contactid) = '' THEN '' ELSE con.fax END) ELSE acc.fax  END as fax,*/
+            $params = array($this->id, $this->id);
+            $result = $adb->pquery($query, $params);
+            $smcreatorid = $adb->query_result($result, 0, 'smcreatorid');
+
+            $query = "select aicrm_users.first_name,aicrm_users.last_name,aicrm_users.email1 from aicrm_users  where aicrm_users.deleted=0 and aicrm_users.id=?";
+            $params = array($smcreatorid);
+            $data_user = $adb->pquery($query, $params);
+            $user_name = $adb->query_result($data_user, 0, 'first_name') . " " . $adb->query_result($data_user, 0, 'last_name');
+            $user_email = $adb->query_result($data_user, 0, 'email1');
+            //get email========================================================================
+            //require_once('include/email_alert/email_alert.php');
+            //$email_body =GetEmail("HelpDesk",'Trouble Tickets',$this->id,"ticketid");
+            //get email========================================================================
+            if ($insertion_mode == 'edit'){
+                $reply = 'Re : ';
+            }else{
+                $reply = '';
+            }
+            //$str_profix = split("-", $adb->query_result($result, 0, 'cf_1050'));
+            //$subject = $reply . "[ Trouble Tickets ] " . " จากฝ่าย " . $adb->query_result($result, 0, 'cf_1037');
+            //$subject = $adb->query_result($result, 0, 'sub') . " " . $adb->query_result($result, 0, 'cf_1149');
+            $subject = $reply . "[ Trouble Tickets ]";
+            require_once('modules/Emails/mail.php');
+            $user_emailid = '';
+            
+            if ($user_emailid == '') {
+                $query = "
+			select aicrm_users.email1
+			from aicrm_group2role
+			left join aicrm_user2role on aicrm_user2role.roleid=aicrm_group2role.roleid
+			left join aicrm_users on aicrm_users.id=aicrm_user2role.userid
+			LEFT JOIN aicrm_users2group ON aicrm_users2group.userid = aicrm_users.id
+			where
+			aicrm_users.deleted=0
+			and (aicrm_group2role.groupid=? or aicrm_users2group.groupid =?)
+			";
+                $params = array($groupid, $groupid);
+                $result1 = $adb->pquery($query, $params);
+                $noofrows = $adb->num_rows($result1);
+                for ($i = 0; $i < $noofrows; $i++) {
+                    if ($user_emailid == '') {
+                        $user_emailid = $adb->query_result($result1, $i, 'email1');
+                    } else {
+                        $user_emailid .= "," . $adb->query_result($result1, $i, 'email1');
+                    }
+                }
+            }
+        } 
+
+        //=========================================================
+        if ($insertion_mode != "edit") {
+            if ($assigntype == 'U') {
+                sendNotificationToOwner($module, $this);
+            } elseif ($assigntype == 'T') {
+                if ($module == "HelpDesk") {
+                    if ($user_emailid != '') {
+                        if ($insertion_mode != 'edit') {
+                            for ($i = 0; $i < $noofrows; $i++) {
+                                //echo $adb->query_result($result1,$i,'email1');exit;
+                                //$mail_status = send_mail('HelpDesk',$adb->query_result($result1,$i,'email1'),$HELPDESK_SUPPORT_NAME,$HELPDESK_SUPPORT_EMAIL_ID,$subject,$email_body);
+                            }
+                            //$mail_status = send_mail('HelpDesk',$user_email_create,$HELPDESK_SUPPORT_NAME,$HELPDESK_SUPPORT_EMAIL_ID,$subject,$email_body);
+                        }
+                        $mail_status_str = $user_emailid . "=" . $mail_status . "&&&";
+                    } else {
+                        $mail_status_str = "'" . $to_email . "'=0&&&";
+                    }
+                    if ($mail_status != '') {
+                        $mail_error_status = getMailErrorString($mail_status_str);
+                    }
+                }else {
+                    sendNotificationToGroups($groupid, $this->id, $module);
+                }
+            }
+
+        } else {//กรณี edit
+           
+            if ($assigntype == 'T') {
+                if ($module == "HelpDesk") {
+                    if ($user_emailid != '') {
+                        if ($insertion_mode != 'edit') {
+                            for ($i = 0; $i < $noofrows; $i++) {
+                                $mail_status = send_mail('HelpDesk', $adb->query_result($result1, $i, 'email1'), $HELPDESK_SUPPORT_NAME, $HELPDESK_SUPPORT_EMAIL_ID, $subject, $email_body);
+                            }
+                        } else {
+                            if ($adb->query_result($result, 0, 'status') == $mod_strings["Closed"]) {
+                                for ($i = 0; $i < $noofrows; $i++) {
+                                    $mail_status = send_mail('HelpDesk', $adb->query_result($result1, $i, 'email1'), $HELPDESK_SUPPORT_NAME, $HELPDESK_SUPPORT_EMAIL_ID, $subject, $email_body);
+                                }
+                                $mail_status = send_mail('HelpDesk', $user_email, $HELPDESK_SUPPORT_NAME, $HELPDESK_SUPPORT_EMAIL_ID, $subject, $email_body);
+                            } else {
+                                //echo $old_user_id1." ".$groupid;exit;
+                                if ($old_user_id1 != $groupid) {
+                                    for ($i = 0; $i < $noofrows; $i++) {
+                                        $mail_status = send_mail('HelpDesk', $adb->query_result($result1, $i, 'email1'), $HELPDESK_SUPPORT_NAME, $HELPDESK_SUPPORT_EMAIL_ID, $subject, $email_body);
+                                    }
+                                }
+                            }
+                        }
+                        $mail_status_str = $user_emailid . "=" . $mail_status . "&&&";
+                    } else {
+                        $mail_status_str = "'" . $to_email . "'=0&&&";
+
+                    }
+                    if ($mail_status != '') {
+                        $mail_error_status = getMailErrorString($mail_status_str);
+                    }
+                }
+
+            }
+        }
+    }
+    /** Function to delete a record in the specifed table
+     * @param $table_name -- table name:: Type varchar
+     * The function will delete a record .The id is obtained from the class variable $this->id and the columnname got from $this->tab_name_index[$table_name]
+     */
+    function deleteRelation($table_name)
+    {
+        global $adb;
+        $check_query = "select * from $table_name where " . $this->tab_name_index[$table_name] . "=?";
+        $check_result = $adb->pquery($check_query, array($this->id));
+        $num_rows = $adb->num_rows($check_result);
+
+        if ($num_rows == 1) {
+            $del_query = "DELETE from $table_name where " . $this->tab_name_index[$table_name] . "=?";
+            $adb->pquery($del_query, array($this->id));
+        }
+    }
+
+    /** Function to attachment filename of the given entity
+     * @param $notesid -- crmid:: Type Integer
+     * The function will get the attachmentsid for the given entityid from aicrm_seattachmentsrel table and get the attachmentsname from aicrm_attachments table
+     * returns the 'filename'
+     */
+    function getOldFileName($notesid)
+    {
+        global $log;
+        $log->info("in getOldFileName  " . $notesid);
+        global $adb;
+        $query1 = "select * from aicrm_seattachmentsrel where crmid=?";
+        $result = $adb->pquery($query1, array($notesid));
+        $noofrows = $adb->num_rows($result);
+        if ($noofrows != 0)
+            $attachmentid = $adb->query_result($result, 0, 'attachmentsid');
+        if ($attachmentid != '') {
+            $query2 = "select * from aicrm_attachments where attachmentsid=?";
+            $filename = $adb->query_result($adb->pquery($query2, array($attachmentid)), 0, 'name');
+        }
+        return $filename;
+    }
+    // Code included by Jaguar - Ends
+    /** Function to retrive the information of the given recordid ,module
+     * @param $record -- Id:: Type Integer
+     * @param $module -- module:: Type varchar
+     * This function retrives the information from the database and sets the value in the class columnfields array
+     */
+    function retrieve_entity_info($record, $module)
+    {
+        global $adb, $log, $app_strings;
+        $result = Array();
+
+        foreach ($this->tab_name_index as $table_name => $index) {
+
+            $result[$table_name] = $adb->pquery("select * from $table_name where $index=?", array($record));
+
+            if ($adb->query_result($result["aicrm_crmentity"], 0, "deleted") == 1)
+                die("<br><br><center>" . $app_strings['LBL_RECORD_DELETE'] . " <a href='javascript:window.history.back()'>" . $app_strings['LBL_GO_BACK'] . ".</a></center>");
+        }
+        /* Prasad: Fix for ticket #4595 */
+        if (isset($this->table_name)) {
+            $mod_index_col = $this->tab_name_index[$this->table_name];
+                      
+            if ($adb->query_result($result[$this->table_name], 0, $mod_index_col) == ''){
+                //echo 4567890; exit;
+                die("<br><br><center>" . $app_strings['LBL_RECORD_NOT_FOUND'] .
+                    ". <a href='javascript:window.history.back()'>" . $app_strings['LBL_GO_BACK'] . ".</a></center>");
+            }
+        }
+
+        // Lookup in cache for information
+        $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module);
+
+        if ($cachedModuleFields === false) {
+            $tabid = getTabid($module);
+            // Let us pick up all the fields first so that we can cache information
+            $sql1 = "SELECT fieldname, fieldid, fieldlabel, columnname, tablename, uitype, typeofdata, presence
+    	FROM aicrm_field WHERE tabid=?";
+            // NOTE: Need to skip in-active fields which we will be done later.
+            $result1 = $adb->pquery($sql1, array($tabid));
+            $noofrows = $adb->num_rows($result1);
+
+            if ($noofrows) {
+                while ($resultrow = $adb->fetch_array($result1)) {
+                    // Update information to cache for re-use
+                    VTCacheUtils::updateFieldInfo(
+                        $tabid, $resultrow['fieldname'], $resultrow['fieldid'],
+                        $resultrow['fieldlabel'], $resultrow['columnname'], $resultrow['tablename'],
+                        $resultrow['uitype'], $resultrow['typeofdata'], $resultrow['presence']
+                    );
+                }
+            }
+            // Get only active field information
+            $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module);
+        }
+
+        if ($cachedModuleFields) {
+            foreach ($cachedModuleFields as $fieldname => $fieldinfo) {
+                $fieldcolname = $fieldinfo['columnname'];
+                $tablename = $fieldinfo['tablename'];
+                $fieldname = $fieldinfo['fieldname'];
+
+                // To avoid ADODB execption pick the entries that are in $tablename
+                // (ex. when we don't have attachment for troubletickets, $result[aicrm_attachments]
+                // will not be set so here we should not retrieve)
+                if (isset($result[$tablename])) {
+                    $fld_value = $adb->query_result($result[$tablename], 0, $fieldcolname);
+                } else {
+                    $adb->println("There is no entry for this entity $record ($module) in the table $tablename");
+                    $fld_value = "";
+                }
+                $this->column_fields[$fieldname] = $fld_value;
+            }
+        }
+        if ($module == 'Users') {
+            for ($i = 0; $i < $noofrows; $i++) {
+                $fieldcolname = $adb->query_result($result1, $i, "columnname");
+                $tablename = $adb->query_result($result1, $i, "tablename");
+                $fieldname = $adb->query_result($result1, $i, "fieldname");
+                $fld_value = $adb->query_result($result[$tablename], 0, $fieldcolname);
+                $this->$fieldname = $fld_value;
+
+            }
+        }
+        $this->column_fields["record_id"] = $record;
+        $this->column_fields["record_module"] = $module;
+    }
+
+    /** Function to saves the values in all the tables mentioned in the class variable $tab_name for the specified module
+     * @param $module -- module:: Type varchar
+     */
+    function save($module_name, $fileid = '')
+    {
+        global $log;
+        $log->debug("module name is " . $module_name);
+
+        //Event triggering code
+        require_once("include/events/include.inc");
+        global $adb;
+        $em = new VTEventsManager($adb);
+        // Initialize Event trigger cache
+        $em->initTriggerCache();
+
+        $entityData = VTEntityData::fromCRMEntity($this);
+        $em->triggerEvent("vtiger.entity.beforesave.modifiable", $entityData);
+        $em->triggerEvent("vtiger.entity.beforesave", $entityData);
+        $em->triggerEvent("vtiger.entity.beforesave.final", $entityData);
+        //Event triggering code ends
+
+        //GS Save entity being called with the modulename as parameter
+        $this->saveentity($module_name, $fileid);
+
+        //Event triggering code
+        if ($module_name != "Branchs" && $module_name != "Questionnaireanswer" && $module_name != "Smartquestionnaire" && $module_name != "Serial" && $module_name != "Errors" && $module_name != "Errorslist" && $module_name != "Sparepart" && $module_name != "Sparepartlist" && $module_name != "Calendar" && $module_name != "Quotes" && $module_name != "Projects" && $module_name != "Opportunity" && $module_name != "Activitys" && $module_name != "KnowledgeBase" && $module_name != "Quotation" && $module_name != "PriceList" && $module_name != "Job" && $module_name != "SmartSms" && $module_name != "Smartemail" && $module_name != "Competitor" && $module_name != "Campaigns" && $module_name != "Faq"&& $module_name != "Plant" && $module_name != "Order" && $module_name != "Deal" && $module_name != "Promotion" && $module_name != "Voucher" && $module_name != "Questionnaire" && $module_name != "Questionnairetemplate" && $module_name != "Announcement" && $module_name != "Promotionvoucher" && $module_name != "Competitorproduct" && $module_name != "Premuimproduct" && $module_name != "Servicerequest" && $module_name != "Point" && $module_name != "Redemption" && $module_name != "Salesorder" && $module_name != "Seriallist" && $module_name != "Inspection" && $module_name != "Inspectiontemplate" && $module_name != "Tools" && $module_name != "Service" && $module_name != "Expense" && $module_name != "Purchasesorder" && $module_name != "Products" && $module_name != 'Contacts' && $module_name != 'Samplerequisition' && $module_name != 'Goodsreceive' && $module_name != 'Marketingtools'){
+            
+            //$em->triggerEvent("vtiger.entity.aftersave", $entityData);
+            //$em->triggerEvent("vtiger.entity.aftersave", $entityData);
+        }
+        //Event triggering code ends
+    }
+
+    function process_list_query($query, $row_offset, $limit = -1, $max_per_page = -1)
+    {
+        global $list_max_entries_per_page;
+        $this->log->debug("process_list_query: " . $query);
+        if (!empty($limit) && $limit != -1) {
+            $result =& $this->db->limitQuery($query, $row_offset + 0, $limit, true, "Error retrieving $this->object_name list: ");
+        } else {
+            $result =& $this->db->query($query, true, "Error retrieving $this->object_name list: ");
+        }
+
+        $list = Array();
+        if ($max_per_page == -1) {
+            $max_per_page = $list_max_entries_per_page;
+        }
+        $rows_found = $this->db->getRowCount($result);
+
+        $this->log->debug("Found $rows_found " . $this->object_name . "s");
+
+        $previous_offset = $row_offset - $max_per_page;
+        $next_offset = $row_offset + $max_per_page;
+
+        if ($rows_found != 0) {
+
+            // We have some data.
+
+            for ($index = $row_offset, $row = $this->db->fetchByAssoc($result, $index); $row && ($index < $row_offset + $max_per_page || $max_per_page == -99); $index++, $row = $this->db->fetchByAssoc($result, $index)) {
+
+
+                foreach ($this->list_fields as $entry) {
+
+                    foreach ($entry as $key => $field) // this will be cycled only once
+                    {
+                        if (isset($row[$field])) {
+                            $this->column_fields[$this->list_fields_names[$key]] = $row[$field];
+
+
+                            $this->log->debug("$this->object_name({$row['id']}): " . $field . " = " . $this->$field);
+                        } else {
+                            $this->column_fields[$this->list_fields_names[$key]] = "";
+                        }
+                    }
+                }
+               
+                $list[] = clone($this);//added by Richie to support PHP5
+            }
+        }
+
+        $response = Array();
+        $response['list'] = $list;
+        $response['row_count'] = $rows_found;
+        $response['next_offset'] = $next_offset;
+        $response['previous_offset'] = $previous_offset;
+
+        return $response;
+    }
+
+    function process_full_list_query($query)
+    {
+        $this->log->debug("CRMEntity:process_full_list_query");
+        $result =& $this->db->query($query, false);
+        //$this->log->debug("CRMEntity:process_full_list_query: result is ".$result);
+
+        if ($this->db->getRowCount($result) > 0) {
+
+            //	$this->db->println("process_full mid=".$this->table_index." mname=".$this->module_name);
+            // We have some data.
+            while ($row = $this->db->fetchByAssoc($result)) {
+                $rowid = $row[$this->table_index];
+
+                if (isset($rowid))
+                    $this->retrieve_entity_info($rowid, $this->module_name);
+                else
+                    $this->db->println("rowid not set unable to retrieve");
+
+
+                //clone function added to resolvoe PHP5 compatibility issue in Dashboards
+                //If we do not use clone, while using PHP5, the memory address remains fixed but the
+                //data gets overridden hence all the rows that come in bear the same value. This in turn
+        //provides a wrong display of the Dashboard graphs. The data is erroneously shown for a specific month alone
+        //Added by Richie
+                $list[] = clone($this);//added by Richie to support PHP5
+            }
+        }
+
+        if (isset($list)) return $list;
+        else return null;
+    }
+
+    /** This function should be overridden in each module.  It marks an item as deleted.
+     * If it is not overridden, then marking this type of item is not allowed
+     * Portions created by SugarCRM are Copyright (C) SugarCRM, Inc..
+     * All Rights Reserved..
+     * Contributor(s): ______________________________________..
+     */
+    function mark_deleted($id)
+    {
+        $date_var = date('Y-m-d H:i:s');
+        $query = "UPDATE aicrm_crmentity set deleted=1,modifiedtime=?,modifiedby=? where crmid=?";
+        $this->db->pquery($query, array($this->db->formatDate($date_var, true), $_SESSION['user_id'], $id), true, "Error marking record deleted: ");
+    }
+
+    function retrieve_by_string_fields($fields_array, $encode = true)
+    {
+        $where_clause = $this->get_where($fields_array);
+
+        $query = "SELECT * FROM $this->table_name $where_clause";
+        $this->log->debug("Retrieve $this->object_name: " . $query);
+        $result =& $this->db->requireSingleResult($query, true, "Retrieving record $where_clause:");
+        if (empty($result)) {
+            return null;
+        }
+
+        $row = $this->db->fetchByAssoc($result, -1, $encode);
+
+        foreach ($this->column_fields as $field) {
+            if (isset($row[$field])) {
+                $this->$field = $row[$field];
+            }
+        }
+        return $this;
+    }
+
+    // this method is called during an import before inserting a bean
+    // define an associative array called $special_fields
+    // the keys are user defined, and don't directly map to the bean's aicrm_fields
+    // the value is the method name within that bean that will do extra
+    // processing for that aicrm_field. example: 'full_name'=>'get_names_from_full_name'
+
+    function process_special_fields()
+    {
+        foreach ($this->special_functions as $func_name) {
+            if (method_exists($this, $func_name)) {
+                $this->$func_name();
+            }
+        }
+    }
+
+    /**
+     * Function to check if the custom aicrm_field aicrm_table exists
+     * return true or false
+     */
+    function checkIfCustomTableExists($tablename)
+    {
+        global $adb;
+        $query = "select * from " . $adb->sql_escape_string($tablename);
+        $result = $this->db->pquery($query, array());
+        $testrow = $this->db->num_fields($result);
+        if ($testrow > 1) {
+            $exists = true;
+        } else {
+            $exists = false;
+        }
+        return $exists;
+    }
+
+    /**
+     * function to construct the query to fetch the custom aicrm_fields
+     * return the query to fetch the custom aicrm_fields
+     */
+    function constructCustomQueryAddendum($tablename, $module)
+    {
+        global $adb;
+        $tabid = getTabid($module);
+        $sql1 = "select columnname,fieldlabel from aicrm_field where generatedtype=2 and tabid=? and aicrm_field.presence in (0,2)";
+        $result = $adb->pquery($sql1, array($tabid));
+        $numRows = $adb->num_rows($result);
+        $sql3 = "select ";
+        for ($i = 0; $i < $numRows; $i++) {
+            $columnName = $adb->query_result($result, $i, "columnname");
+            $fieldlabel = $adb->query_result($result, $i, "fieldlabel");
+            //construct query as below
+            if ($i == 0) {
+                $sql3 .= $tablename . "." . $columnName . " '" . $fieldlabel . "'";
+            } else {
+                $sql3 .= ", " . $tablename . "." . $columnName . " '" . $fieldlabel . "'";
+            }
+
+        }
+        if ($numRows > 0) {
+            $sql3 = $sql3 . ',';
+        }
+        return $sql3;
+
+    }
+
+
+    /**
+     * This function returns a full (ie non-paged) list of the current object type.
+     * Portions created by SugarCRM are Copyright (C) SugarCRM, Inc..
+     * All Rights Reserved..
+     * Contributor(s): ______________________________________..
+     */
+    function get_full_list($order_by = "", $where = "")
+    {
+        $this->log->debug("get_full_list:  order_by = '$order_by' and where = '$where'");
+        $query = $this->create_list_query($order_by, $where);
+        return $this->process_full_list_query($query);
+    }
+
+    /**
+     * Track the viewing of a detail record.  This leverages get_summary_text() which is object specific
+     * params $user_id - The user that is viewing the record.
+     * Portions created by SugarCRM are Copyright (C) SugarCRM, Inc..
+     * All Rights Reserved..
+     * Contributor(s): ______________________________________..
+     */
+    function track_view($user_id, $current_module, $id = '')
+    {
+        $this->log->debug("About to call aicrm_tracker (user_id, module_name, item_id)($user_id, $current_module, $this->id)");
+
+        $tracker = new Tracker();
+        $tracker->track_view($user_id, $current_module, $id, '');
+    }
+
+    /**
+     * Function to get the column value of a field when the field value is empty ''
+     * @param $columnname -- Column name for the field
+     * @param $fldvalue -- Input value for the field taken from the User
+     * @param $fieldname -- Name of the Field
+     * @param $uitype -- UI type of the field
+     * @return Column value of the field.
+     */
+    function get_column_value($columnname, $fldvalue, $fieldname, $uitype, $datatype = '')
+    {
+        global $log;
+        $log->debug("Entering function get_column_value ($columnname, $fldvalue, $fieldname, $uitype, $datatype='')");
+
+        // Added for the fields of uitype '57' which has datatype mismatch in crmentity table and particular entity table
+        if ($uitype == 57 && $fldvalue == '') {
+            return 0;
+        }
+        if (is_uitype($uitype, "_date_") && $fldvalue == '') {
+            return null;
+        }
+        if ($datatype == 'I' || $datatype == 'N' || $datatype == 'NN') {
+            return 0;
+        }
+        $log->debug("Exiting function get_column_value");
+        return $fldvalue;
+    }
+
+    /**
+     * Function to make change to column fields, depending on the current user's accessibility for the fields
+     */
+    function apply_field_security()
+    {
+        global $current_user, $currentModule;
+
+        require_once('include/utils/UserInfoUtil.php');
+        foreach ($this->column_fields as $fieldname => $fieldvalue) {
+            $reset_value = false;
+            if (getFieldVisibilityPermission($currentModule, $current_user->id, $fieldname) != '0')
+                $reset_value = true;
+
+            if ($fieldname == "record_id" || $fieldname == "record_module")
+                $reset_value = false;
+
+            /*
+				if (isset($this->additional_column_fields) && in_array($fieldname, $this->additional_column_fields) == true)
+					$reset_value = false;
+			 */
+
+            if ($reset_value == true)
+                $this->column_fields[$fieldname] = "";
+        }
+    }
+
+    /**
+     * Function invoked during export of module record value.
+     */
+    function transform_export_value($key, $value)
+    {
+        // NOTE: The sub-class can override this function as required.
+        return $value;
+    }
+
+    /**
+     * Function to initialize the importable fields array, based on the User's accessibility to the fields
+     */
+    function initImportableFields($module)
+    {   
+        global $current_user, $adb;
+        require_once('include/utils/UserInfoUtil.php');
+        //echo $module;
+        $skip_uitypes = array('4'); // uitype 4 is for Mod numbers
+       
+        //Look at cache if the fields information is available.
+        $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module);
+
+        //echo 3;
+        if($cachedModuleFields === false) {
+            getColumnFields($module); // This API will initialize the cache as well
+            // We will succeed now due to above function call
+            $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module);
+        }
+        //echo 4;
+        $colf = Array();
+        //echo "<pre>";print_r($cachedModuleFields); echo "</pre>";
+        if ($cachedModuleFields) {
+            foreach ($cachedModuleFields as $fieldinfo) {
+                // Skip non-supported fields
+                if (in_array($fieldinfo['uitype'], $skip_uitypes)) {
+                    continue;
+                } else {
+                    $colf[$fieldinfo['fieldname']] = $fieldinfo['uitype'];
+                }
+            }
+        }
+        foreach ($colf as $key => $value) {
+            if (getFieldVisibilityPermission($module, $current_user->id, $key) == '0'){
+                $this->importable_fields[$key] = $value;
+            }
+        }
+        //echo "<pre>";print_r($this->importable_fields); echo "</pre>";
+    }
+
+
+    /** Function to initialize the required fields array for that particular module */
+    function initRequiredFields($module)
+    {
+        global $adb;
+
+        $tabid = getTabId($module);
+        $sql = "select * from aicrm_field where tabid= ? and typeofdata like '%M%' and uitype not in ('53','70') and aicrm_field.presence in (0,2)";
+        $result = $adb->pquery($sql, array($tabid));
+        $numRows = $adb->num_rows($result);
+        for ($i = 0; $i < $numRows; $i++) {
+            $fieldName = $adb->query_result($result, $i, "fieldname");
+            $this->required_fields[$fieldName] = 1;
+        }
+    }
+
+    /** Function to delete an entity with given Id */
+    function trash($module, $id)
+    {
+        global $log, $current_user;
+
+        $this->mark_deleted($id); //exit();
+        $this->unlinkDependencies($module, $id);
+
+        require_once('include/freetag/freetag.class.php');
+        $freetag = new freetag();
+        $freetag->delete_all_object_tags_for_user($current_user->id, $id);
+
+        $sql_recentviewed = 'DELETE FROM aicrm_tracker WHERE user_id = ? AND item_id = ?';
+        $this->db->pquery($sql_recentviewed, array($current_user->id, $id));
+    }
+
+
+    /** Function to unlink all the dependent entities of the given Entity by Id */
+    function unlinkDependencies($module, $id)
+    {
+        global $log;
+
+        $fieldRes = $this->db->pquery('SELECT tabid, tablename, columnname FROM aicrm_field WHERE fieldid IN (
+			SELECT fieldid FROM aicrm_fieldmodulerel WHERE relmodule=?)', array($module));
+        $numOfFields = $this->db->num_rows($fieldRes);
+        for ($i = 0; $i < $numOfFields; $i++) {
+            $tabId = $this->db->query_result($fieldRes, $i, 'tabid');
+            $tableName = $this->db->query_result($fieldRes, $i, 'tablename');
+            $columnName = $this->db->query_result($fieldRes, $i, 'columnname');
+
+            $relatedModule = vtlib_getModuleNameById($tabId);
+            $focusObj = CRMEntity::getInstance($relatedModule);
+
+            //Backup Field Relations for the deleted entity
+            $relQuery = "SELECT $focusObj->table_index FROM $tableName WHERE $columnName=?";
+            $relResult = $this->db->pquery($relQuery, array($id));
+            $numOfRelRecords = $this->db->num_rows($relResult);
+            if ($numOfRelRecords > 0) {
+                $recordIdsList = array();
+                for ($k = 0; $k < $numOfRelRecords; $k++) {
+                    $recordIdsList[] = $this->db->query_result($relResult, $k, $focusObj->table_index);
+                }
+                $params = array($id, RB_RECORD_UPDATED, $tableName, $columnName, $focusObj->table_index, implode(",", $recordIdsList));
+                $this->db->pquery('INSERT INTO aicrm_relatedlists_rb VALUES (?,?,?,?,?,?)', $params);
+            }
+
+        }
+    }
+
+    /** Function to unlink an entity with given Id from another entity */
+    function unlinkRelationship($id, $return_module, $return_id)
+    {
+        global $log, $currentModule;
+
+        $query = 'DELETE FROM aicrm_crmentityrel WHERE (crmid=? AND relmodule=? AND relcrmid=?) OR (relcrmid=? AND module=? AND crmid=?)';
+        $params = array($id, $return_module, $return_id, $id, $return_module, $return_id);
+        $this->db->pquery($query, $params);
+
+        $fieldRes = $this->db->pquery('SELECT tabid, tablename, columnname FROM aicrm_field WHERE fieldid IN (
+			SELECT fieldid FROM aicrm_fieldmodulerel WHERE module=? AND relmodule=?)', array($currentModule, $return_module));
+        $numOfFields = $this->db->num_rows($fieldRes);
+        for ($i = 0; $i < $numOfFields; $i++) {
+            $tabId = $this->db->query_result($fieldRes, $i, 'tabid');
+            $tableName = $this->db->query_result($fieldRes, $i, 'tablename');
+            $columnName = $this->db->query_result($fieldRes, $i, 'columnname');
+
+            $relatedModule = vtlib_getModuleNameById($tabId);
+            $focusObj = CRMEntity::getInstance($relatedModule);
+
+            $updateQuery = "UPDATE $tableName SET $columnName=0 WHERE $columnName=? AND $focusObj->table_index=?";
+            $updateParams = array($return_id, $id);
+            $this->db->pquery($updateQuery, $updateParams);
+        }
+    }
+
+    /** Function to restore a deleted record of specified module with given crmid
+     * @param $module -- module name:: Type varchar
+     * @param $entity_ids -- list of crmids :: Array
+     */
+    function restore($module, $id)
+    {
+        global $current_user;
+
+        $this->db->println("TRANS restore starts $module");
+        $this->db->startTransaction();
+
+        $this->db->pquery('UPDATE aicrm_crmentity SET deleted=0 WHERE crmid = ?', array($id));
+        //Restore related entities/records
+        $this->restoreRelatedRecords($module, $id);
+
+        $this->db->completeTransaction();
+        $this->db->println("TRANS restore ends");
+    }
+
+    /** Function to restore all the related records of a given record by id */
+    function restoreRelatedRecords($module, $record)
+    {
+
+        $result = $this->db->pquery('SELECT * FROM aicrm_relatedlists_rb WHERE entityid = ?', array($record));
+        $numRows = $this->db->num_rows($result);
+        for ($i = 0; $i < $numRows; $i++) {
+            $action = $this->db->query_result($result, $i, "action");
+            $rel_table = $this->db->query_result($result, $i, "rel_table");
+            $rel_column = $this->db->query_result($result, $i, "rel_column");
+            $ref_column = $this->db->query_result($result, $i, "ref_column");
+            $related_crm_ids = $this->db->query_result($result, $i, "related_crm_ids");
+
+            if (strtoupper($action) == RB_RECORD_UPDATED) {
+                $related_ids = explode(",", $related_crm_ids);
+                if ($rel_table == 'aicrm_crmentity' && $rel_column == 'deleted') {
+                    $sql = "UPDATE $rel_table set $rel_column = 0 WHERE $ref_column IN (" . generateQuestionMarks($related_ids) . ")";
+                    $this->db->pquery($sql, array($related_ids));
+                } else {
+                    $sql = "UPDATE $rel_table set $rel_column = ? WHERE $rel_column = 0 AND $ref_column IN (" . generateQuestionMarks($related_ids) . ")";
+                    $this->db->pquery($sql, array($record, $related_ids));
+                }
+            } elseif (strtoupper($action) == RB_RECORD_DELETED) {
+                if ($rel_table == 'aicrm_seproductrel') {
+                    $sql = "INSERT INTO $rel_table($rel_column, $ref_column, 'setype') VALUES (?,?,?)";
+                    $this->db->pquery($sql, array($record, $related_crm_ids, $module));
+                } else {
+                    $sql = "INSERT INTO $rel_table($rel_column, $ref_column) VALUES (?,?)";
+                    $this->db->pquery($sql, array($record, $related_crm_ids));
+                }
+            }
+        }
+
+        //Clean up the the backup data also after restoring
+        $this->db->pquery('DELETE FROM aicrm_relatedlists_rb WHERE entityid = ?', array($record));
+    }
+
+    /**
+     * Function to initialize the sortby fields array
+     */
+    function initSortByField($module)
+    {
+        global $adb, $log;
+        $log->debug("Entering function initSortByField ($module)");
+        // Define the columnname's and uitype's which needs to be excluded
+        $exclude_columns = Array('parent_id', 'quoteid', 'vendorid', 'access_count');
+        $exclude_uitypes = Array();
+
+        $tabid = getTabId($module);
+        if ($module == 'Calendar') {
+            $tabid = array('9', '16');
+        }
+        $sql = "SELECT columnname FROM aicrm_field " .
+            " WHERE (fieldname not like '%\_id' OR fieldname in ('assigned_user_id'))" .
+            " AND tabid in (" . generateQuestionMarks($tabid) . ") and aicrm_field.presence in (0,2)";
+        $params = array($tabid);
+        if (count($exclude_columns) > 0) {
+            $sql .= " AND columnname NOT IN (" . generateQuestionMarks($exclude_columns) . ")";
+            array_push($params, $exclude_columns);
+        }
+        if (count($exclude_uitypes) > 0) {
+            $sql .= " AND uitype NOT IN (" . generateQuestionMarks($exclude_uitypes) . ")";
+            array_push($params, $exclude_uitypes);
+        }
+        $result = $adb->pquery($sql, $params);
+        $num_rows = $adb->num_rows($result);
+        for ($i = 0; $i < $num_rows; $i++) {
+            $columnname = $adb->query_result($result, $i, 'columnname');
+            if (in_array($columnname, $this->sortby_fields)) continue;
+            else $this->sortby_fields[] = $columnname;
+        }
+        if ($tabid == 21 or $tabid == 22)
+            $this->sortby_fields[] = 'crmid';
+        $log->debug("Exiting initSortByField");
+    }
+    
+    /* Function to set the Sequence string and sequence number starting value */
+    function setModuleSeqNumber($mode, $module, $req_str = '', $req_no = '')
+    {
+        global $adb;
+        //when we configure the invoice number in Settings this will be used
+        if ($mode == "configure" && $req_no != '') {
+            $check = $adb->pquery("select cur_id from aicrm_modentity_num where semodule=? and prefix = ?", array($module, $req_str));
+            if ($adb->num_rows($check) == 0) {
+                $numid = $adb->getUniqueId("aicrm_modentity_num");
+                $active = $adb->pquery("select num_id from aicrm_modentity_num where semodule=? and active=1", array($module));
+                $adb->pquery("UPDATE aicrm_modentity_num SET active=0 where num_id=?", array($adb->query_result($active, 0, 'num_id')));
+
+                $adb->pquery("INSERT into aicrm_modentity_num values(?,?,?,?,?,?)", array($numid, $module, $req_str, $req_no, $req_no, 1));
+                return true;
+            } else if ($adb->num_rows($check) != 0) {
+                $num_check = $adb->query_result($check, 0, 'cur_id');
+                if ($req_no < $num_check) {
+                    return false;
+                } else {
+                    $adb->pquery("UPDATE aicrm_modentity_num SET active=0 where active=1 and semodule=?", array($module));
+                    $adb->pquery("UPDATE aicrm_modentity_num SET cur_id=?, active = 1 where prefix=? and semodule=?", array($req_no, $req_str, $module));
+                    return true;
+                }
+            }
+        } else if ($mode == "increment") {
+            //when we save new invoice we will increment the invoice id and write
+            $check = $adb->pquery("select cur_id,prefix from aicrm_modentity_num where semodule=? and active = 1", array($module));
+            $prefix = $adb->query_result($check, 0, 'prefix');
+            $curid = $adb->query_result($check, 0, 'cur_id');
+            $prev_inv_no = $prefix . $curid;
+            $strip = strlen($curid) - strlen($curid + 1);
+            if ($strip < 0) $strip = 0;
+            $temp = str_repeat("0", $strip);
+            $req_no .= $temp . ($curid + 1);
+            $adb->pquery("UPDATE aicrm_modentity_num SET cur_id=? where cur_id=? and active=1 AND semodule=?", array($req_no, $curid, $module));
+            return decode_html($prev_inv_no);
+        }
+    }
+    // END
+
+    /* Function to get the next module sequence number for a given module */
+    function getModuleSeqInfo($module)
+    {   
+
+        global $adb;
+        $check = $adb->pquery("select cur_id,prefix from aicrm_modentity_num where semodule=? and active = 1", array($module));
+        
+        $prefix = $adb->query_result($check, 0, 'prefix');
+        $curid = $adb->query_result($check, 0, 'cur_id');
+        return array($prefix, $curid);
+    }
+    // END
+
+    /* Function to check if the mod number already exits */
+    function checkModuleSeqNumber($table, $column, $no)
+    {
+        global $adb;
+        $result = $adb->pquery("select " . $adb->sql_escape_string($column) .
+            " from " . $adb->sql_escape_string($table) .
+            " where " . $adb->sql_escape_string($column) . " = ?", array($no));
+
+        $num_rows = $adb->num_rows($result);
+
+        if ($num_rows > 0)
+            return true;
+        else
+            return false;
+    }
+
+    // END
+
+    function updateMissingSeqNumber($module)
+    {
+        global $log, $adb;
+        $log->debug("Entered updateMissingSeqNumber function");
+
+        vtlib_setup_modulevars($module, $this);
+
+        $tabid = getTabid($module);
+        $fieldinfo = $adb->pquery("SELECT * FROM aicrm_field WHERE tabid = ? AND uitype = 4", Array($tabid));
+
+        $returninfo = Array();
+
+        if ($fieldinfo && $adb->num_rows($fieldinfo)) {
+            // TODO: We assume the following for module sequencing field
+            // 1. There will be only field per module
+            // 2. This field is linked to module base table column
+            $fld_table = $adb->query_result($fieldinfo, 0, 'tablename');
+            $fld_column = $adb->query_result($fieldinfo, 0, 'columnname');
+
+            if ($fld_table == $this->table_name) {
+                $records = $adb->query("SELECT $this->table_index AS recordid FROM $this->table_name " .
+                    "WHERE $fld_column = '' OR $fld_column is NULL");
+
+                if ($records && $adb->num_rows($records)) {
+                    $returninfo['totalrecords'] = $adb->num_rows($records);
+                    $returninfo['updatedrecords'] = 0;
+
+                    $modseqinfo = $this->getModuleSeqInfo($module);
+                    $prefix = $modseqinfo[0];
+                    $cur_id = $modseqinfo[1];
+
+                    $old_cur_id = $cur_id;
+                    while ($recordinfo = $adb->fetch_array($records)) {
+                        $value = "$prefix" . "$cur_id";
+                        $adb->pquery("UPDATE $fld_table SET $fld_column = ? WHERE $this->table_index = ?", Array($value, $recordinfo['recordid']));
+                        $cur_id += 1;
+                        $returninfo['updatedrecords'] = $returninfo['updatedrecords'] + 1;
+                    }
+                    if ($old_cur_id != $cur_id) {
+                        $adb->pquery("UPDATE aicrm_modentity_num set cur_id=? where semodule=? and active=1", Array($cur_id, $module));
+                    }
+                }
+            } else {
+                $log->fatal("Updating Missing Sequence Number FAILED! REASON: Field table and module table mismatching.");
+            }
+        }
+        return $returninfo;
+    }
+
+    /* Generic function to get attachments in the related list of a given module */
+    function get_attachments($id, $cur_tab_id, $rel_tab_id, $actions = false)
+    {
+        global $currentModule, $app_strings, $singlepane_view;
+        $this_module = $currentModule;
+        $parenttab = getParentTab();
+
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
+        $other = CRMEntity::getInstance($related_module);
+
+        // Some standard module class doesn't have required variables
+        // that are used in the query, they are defined in this generic API
+        vtlib_setup_modulevars($related_module, $other);
+
+        $singular_modname = vtlib_toSingular($related_module);
+        $button = '';
+        if ($actions) {
+            if (is_string($actions)) $actions = explode(',', strtoupper($actions));
+            if (in_array('SELECT', $actions) && isPermitted($related_module, 4, '') == 'yes') {
+                $button .= "<input title='" . getTranslatedString('LBL_SELECT') . " " . getTranslatedString($related_module) . "' class='crmbutton small edit' type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\" value='" . getTranslatedString('LBL_SELECT') . " " . getTranslatedString($related_module) . "'>&nbsp;";
+            }
+            if (in_array('ADD', $actions) && isPermitted($related_module, 1, '') == 'yes') {
+                $button .= "<input title='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "' class='crmbutton small create'" .
+                    " onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\";this.form.record.value=\"\";' type='submit' name='button'" .
+                    " value='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "'>&nbsp;";
+            }
+        }
+
+        // To make the edit or del link actions to return back to same view.
+        if ($singlepane_view == 'true') $returnset = "&return_module=$this_module&return_action=DetailView&return_id=$id";
+        else $returnset = "&return_module=$this_module&return_action=CallRelatedList&return_id=$id";
+
+        $query = "select case when (aicrm_users.user_name not like '') then aicrm_users.user_name else aicrm_groups.groupname end as user_name," .
+            "'Documents' ActivityType,aicrm_attachments.type  FileType,crm2.modifiedtime lastmodified,
+				aicrm_seattachmentsrel.attachmentsid attachmentsid, aicrm_notes.notesid crmid,
+				aicrm_notes.notecontent description,aicrm_notes.*,aicrm_crmentity.*
+				from aicrm_notes
+				inner join aicrm_senotesrel on aicrm_senotesrel.notesid= aicrm_notes.notesid
+				inner join aicrm_crmentity on aicrm_crmentity.crmid= aicrm_notes.notesid and aicrm_crmentity.deleted=0
+				inner join aicrm_crmentity crm2 on crm2.crmid=aicrm_senotesrel.crmid
+				LEFT JOIN aicrm_groups
+				ON aicrm_groups.groupid = aicrm_crmentity.smownerid
+				left join aicrm_seattachmentsrel  on aicrm_seattachmentsrel.crmid =aicrm_notes.notesid
+				left join aicrm_attachments on aicrm_seattachmentsrel.attachmentsid = aicrm_attachments.attachmentsid
+				left join aicrm_users on aicrm_crmentity.smownerid= aicrm_users.id
+				where crm2.crmid=" . $id;
+
+        
+        $return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
+
+        if ($return_value == null) $return_value = Array();
+        $return_value['CUSTOM_BUTTON'] = $button;
+        return $return_value;
+    }
+
+    /**
+     * For Record View Notification
+     */
+    function isViewed($crmid = false)
+    {
+        if (!$crmid) {
+            $crmid = $this->id;
+        }
+        if ($crmid) {
+            global $adb;
+            $result = $adb->pquery("SELECT viewedtime,modifiedtime,smcreatorid,smownerid,modifiedby FROM aicrm_crmentity WHERE crmid=?", Array($crmid));
+            $resinfo = $adb->fetch_array($result);
+
+            $lastviewed = $resinfo['viewedtime'];
+            $modifiedon = $resinfo['modifiedtime'];
+            $smownerid = $resinfo['smownerid'];
+            $smcreatorid = $resinfo['smcreatorid'];
+            $modifiedby = $resinfo['modifiedby'];
+
+            if ($modifiedby == '0' && ($smownerid == $smcreatorid)) {
+                /** When module record is created **/
+                return true;
+            } else if ($smownerid == $modifiedby) {
+                /** Owner and Modifier as same. **/
+                return true;
+            } else if ($lastviewed && $modifiedon) {
+                /** Lastviewed and Modified time is available. */
+                if ($this->__timediff($modifiedon, $lastviewed) > 0) return true;
+            }
+        }
+        return false;
+    }
+
+    function __timediff($d1, $d2)
+    {
+        list($t1_1, $t1_2) = explode(' ', $d1);
+        list($t1_y, $t1_m, $t1_d) = explode('-', $t1_1);
+        list($t1_h, $t1_i, $t1_s) = explode(':', $t1_2);
+
+        $t1 = mktime($t1_h, $t1_i, $t1_s, $t1_m, $t1_d, $t1_y);
+
+        list($t2_1, $t2_2) = explode(' ', $d2);
+        list($t2_y, $t2_m, $t2_d) = explode('-', $t2_1);
+        list($t2_h, $t2_i, $t2_s) = explode(':', $t2_2);
+
+        $t2 = mktime($t2_h, $t2_i, $t2_s, $t2_m, $t2_d, $t2_y);
+
+        if ($t1 == $t2) return 0;
+        return $t2 - $t1;
+    }
+
+    function markAsViewed($userid)
+    {
+        global $adb;
+        $adb->pquery("UPDATE aicrm_crmentity set viewedtime=? WHERE crmid=? AND smownerid=?",
+            Array(date('Y-m-d H:i:s', time()), $this->id, $userid));
+    }
+
+    /**
+     * Save the related module record information. Triggered from CRMEntity->saveentity method or updateRelations.php
+     * @param String This module name
+     * @param Integer This module record number
+     * @param String Related module name
+     * @param mixed Integer or Array of related module record number
+     */
+    function save_related_module($module, $crmid, $with_module, $with_crmid)
+    {
+        global $adb;
+        if (!is_array($with_crmid)) $with_crmid = Array($with_crmid);
+        //Bas 20-09-2016
+        $adddt = date('Y-m-d H:i:s');
+        //echo $with_module. " - " . $module; exit;
+        foreach ($with_crmid as $relcrmid) {
+
+            if ($with_module == 'Documents') {
+                $checkpresence = $adb->pquery("SELECT crmid FROM aicrm_senotesrel WHERE crmid = ? AND notesid = ?", Array($crmid, $relcrmid));
+                // Relation already exists? No need to add again
+                if ($checkpresence && $adb->num_rows($checkpresence)) continue;
+
+                $adb->pquery("INSERT INTO aicrm_senotesrel(crmid, notesid) VALUES(?,?)", array($crmid, $relcrmid));
+
+            } else {
+               
+                $checkpresence = $adb->pquery("SELECT crmid FROM aicrm_crmentityrel WHERE
+					crmid = ? AND module = ? AND relcrmid = ? AND relmodule = ?", Array($crmid, $module, $relcrmid, $with_module));
+                // Relation already exists? No need to add again
+                if ($checkpresence && $adb->num_rows($checkpresence)) continue;
+
+                $adb->pquery("INSERT INTO aicrm_crmentityrel(crmid, module, relcrmid, relmodule) VALUES(?,?,?,?)",
+                    Array($crmid, $module, $relcrmid, $with_module));
+            }
+        }
+    }
+
+    /**
+     * Delete the related module record information. Triggered from updateRelations.php
+     * @param String This module name
+     * @param Integer This module record number
+     * @param String Related module name
+     * @param mixed Integer or Array of related module record number
+     */
+    function delete_related_module($module, $crmid, $with_module, $with_crmid)
+    {
+        global $adb;
+        if (!is_array($with_crmid)) $with_crmid = Array($with_crmid);
+        foreach ($with_crmid as $relcrmid) {
+
+            if ($with_module == 'Documents') {
+                $adb->pquery("DELETE FROM aicrm_senotesrel WHERE crmid=? AND notesid=?",
+                    Array($crmid, $relcrmid));
+            } else {
+                $adb->pquery("DELETE FROM aicrm_crmentityrel WHERE crmid=? AND module=? AND relcrmid=? AND relmodule=?",
+                    Array($crmid, $module, $relcrmid, $with_module));
+            }
+        }
+    }
+
+    /**
+     * Default (generic) function to handle the related list for the module.
+     * NOTE: Vtiger_Module::setRelatedList sets reference to this function in aicrm_relatedlists table
+     * if function name is not explicitly specified.
+     */
+    function get_related_list($id, $cur_tab_id, $rel_tab_id, $actions = false)
+    {
+
+        global $currentModule, $app_strings, $singlepane_view;
+
+        $parenttab = getParentTab();
+
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
+
+        $other = CRMEntity::getInstance($related_module);
+        
+        // Some standard module class doesn't have required variables
+        // that are used in the query, they are defined in this generic API
+        vtlib_setup_modulevars($currentModule, $this);
+        vtlib_setup_modulevars($related_module, $other);
+
+        $singular_modname = vtlib_toSingular($related_module);
+
+        $button = '';
+        if ($actions) {
+            if (is_string($actions)) $actions = explode(',', strtoupper($actions));
+            if (in_array('SELECT', $actions) && isPermitted($related_module, 4, '') == 'yes') {
+                $button .= "<input title='" . getTranslatedString('LBL_SELECT') . " " . getTranslatedString($related_module) . "' class='crmbutton small edit' " .
+                    " type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\"" .
+                    " value='" . getTranslatedString('LBL_SELECT') . " " . getTranslatedString($related_module) . "'>&nbsp;";
+            }
+            if (in_array('ADD', $actions) && isPermitted($related_module, 1, '') == 'yes') {
+                $button .= "<input title='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "' class='crmbutton small create'" .
+                    " onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
+                    " value='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "'>&nbsp;";
+            }
+        }
+        //echo "<pre>"; print_r($other->related_tables); echo "</pre>"; exit;
+        // To make the edit or del link actions to return back to same view.
+        if ($singlepane_view == 'true') $returnset = "&return_module=$currentModule&return_action=DetailView&return_id=$id";
+        else $returnset = "&return_module=$currentModule&return_action=CallRelatedList&return_id=$id";
+
+
+        if($cur_tab_id == 11 && ($rel_tab_id == 14 || $rel_tab_id == 69 || $rel_tab_id == 63)){
+            $returnset = "&return_module=$currentModule&return_action=DetailView&return_id=$id";
+        }
+
+
+        $query = "SELECT aicrm_crmentity.*, $other->table_name.*";
+        
+        $query .= ", CASE WHEN (aicrm_users.user_name NOT LIKE '') THEN aicrm_users.user_name ELSE aicrm_groups.groupname END AS user_name";
+
+        if($related_module == "Serial"){
+            $query .= ",aicrm_products.*";
+        }
+
+        $more_relation = '';
+
+        if (!empty($other->related_tables)) {
+            foreach ($other->related_tables as $tname => $relmap) {
+                $query .= ", $tname.*";
+                // Setup the default JOIN conditions if not specified
+                if (empty($relmap[1])) $relmap[1] = $other->table_name;
+                if (empty($relmap[2])) $relmap[2] = $relmap[0];
+                $more_relation .= " LEFT JOIN $tname ON $tname.$relmap[0] = $relmap[1].$relmap[2]";
+            }
+        }
+        if($cur_tab_id == 6 && $rel_tab_id ==4){
+            $more_relation = '';
+        }
+        //echo $more_relation."<br>";
+        $query .= " FROM $other->table_name";
+        $query .= " INNER JOIN aicrm_crmentity ON aicrm_crmentity.crmid = $other->table_name.$other->table_index";
+        $query .= " INNER JOIN aicrm_crmentityrel ON (aicrm_crmentityrel.relcrmid = aicrm_crmentity.crmid OR aicrm_crmentityrel.crmid = aicrm_crmentity.crmid)";
+        $query .= " LEFT  JOIN $this->table_name  ON $this->table_name.$this->table_index = $other->table_name.$other->table_index";
+        $query .= $more_relation;
+        $query .= " LEFT  JOIN aicrm_users ON aicrm_users.id = aicrm_crmentity.smownerid";
+        $query .= " LEFT  JOIN aicrm_groups ON aicrm_groups.groupid = aicrm_crmentity.smownerid";
+
+        if($related_module == "Serial"){
+            $query .= " LEFT JOIN aicrm_products on aicrm_products.productid = aicrm_serial.product_id";
+        }
+
+        $query .= " WHERE aicrm_crmentity.deleted = 0 AND (aicrm_crmentityrel.crmid = $id OR aicrm_crmentityrel.relcrmid = $id)";
+        // echo $query."<br>";
+        $return_value = GetRelatedList($currentModule, $related_module, $other, $query, $button, $returnset);
+
+        
+        if ($return_value == null) $return_value = Array();
+        $return_value['CUSTOM_BUTTON'] = $button;
+
+        return $return_value;
+    }
+
+    /**
+     * Default (generic) function to handle the dependents list for the module.
+     * NOTE: UI type '10' is used to stored the references to other modules for a given record.
+     * These dependent records can be retrieved through this function.
+     * For eg: A trouble ticket can be related to an Account or a Contact.
+     * From a given Contact/Account if we need to fetch all such dependent trouble tickets, get_dependents_list function can be used.
+     */
+    function get_dependents_list($id, $cur_tab_id, $rel_tab_id, $actions = false)
+    {
+
+        global $currentModule, $app_strings, $singlepane_view, $current_user;
+
+        $parenttab = getParentTab();
+
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
+        $other = CRMEntity::getInstance($related_module);
+
+        // Some standard module class doesn't have required variables
+        // that are used in the query, they are defined in this generic API
+        vtlib_setup_modulevars($currentModule, $this);
+        vtlib_setup_modulevars($related_module, $other);
+
+        $singular_modname = vtlib_toSingular($related_module);
+
+        $button = '';
+
+        // To make the edit or del link actions to return back to same view.
+        if ($singlepane_view == 'true') $returnset = "&return_module=$currentModule&return_action=DetailView&return_id=$id";
+        else $returnset = "&return_module=$currentModule&return_action=CallRelatedList&return_id=$id";
+
+        $return_value = null;
+        $dependentFieldSql = $this->db->pquery("SELECT tabid, fieldname, columnname FROM aicrm_field WHERE uitype='10' AND" .
+            " fieldid IN (SELECT fieldid FROM aicrm_fieldmodulerel WHERE relmodule=? AND module=?)", array($currentModule, $related_module));
+        $numOfFields = $this->db->num_rows($dependentFieldSql);
+
+        if ($numOfFields > 0) {
+            $dependentColumn = $this->db->query_result($dependentFieldSql, 0, 'columnname');
+            $dependentField = $this->db->query_result($dependentFieldSql, 0, 'fieldname');
+
+            $button .= '<input type="hidden" name="' . $dependentColumn . '" id="' . $dependentColumn . '" value="' . $id . '">';
+            $button .= '<input type="hidden" name="' . $dependentColumn . '_type" id="' . $dependentColumn . '_type" value="' . $currentModule . '">';
+            if ($actions) {
+                if (is_string($actions)) $actions = explode(',', strtoupper($actions));
+                if (in_array('ADD', $actions) && isPermitted($related_module, 1, '') == 'yes'
+                    && getFieldVisibilityPermission($related_module, $current_user->id, $dependentField) == '0') {
+                    $button .= "<input title='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "' class='crmbutton small create'" .
+                        " onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
+                        " value='" . getTranslatedString('LBL_ADD_NEW') . " " . getTranslatedString($singular_modname) . "'>&nbsp;";
+                }
+            }
+
+            $query = "SELECT aicrm_crmentity.*, $other->table_name.*";
+
+            $query .= ", CASE WHEN (aicrm_users.user_name NOT LIKE '') THEN aicrm_users.user_name ELSE aicrm_groups.groupname END AS user_name";
+
+            $more_relation = '';
+            if (!empty($other->related_tables)) {
+                foreach ($other->related_tables as $tname => $relmap) {
+                    $query .= ", $tname.*";
+
+                    // Setup the default JOIN conditions if not specified
+                    if (empty($relmap[1])) $relmap[1] = $other->table_name;
+                    if (empty($relmap[2])) $relmap[2] = $relmap[0];
+                    $more_relation .= " LEFT JOIN $tname ON $tname.$relmap[0] = $relmap[1].$relmap[2]";
+                }
+            }
+
+            $query .= " FROM $other->table_name";
+            $query .= " INNER JOIN aicrm_crmentity ON aicrm_crmentity.crmid = $other->table_name.$other->table_index";
+            $query .= " INNER  JOIN $this->table_name   ON $this->table_name.$this->table_index = $other->table_name.$dependentColumn";
+            $query .= $more_relation;
+            $query .= " LEFT  JOIN aicrm_users        ON aicrm_users.id = aicrm_crmentity.smownerid";
+            $query .= " LEFT  JOIN aicrm_groups       ON aicrm_groups.groupid = aicrm_crmentity.smownerid";
+
+            $query .= " WHERE aicrm_crmentity.deleted = 0 AND $this->table_name.$this->table_index = $id";
+
+            $return_value = GetRelatedList($currentModule, $related_module, $other, $query, $button, $returnset);
+        }
+        if ($return_value == null) $return_value = Array();
+        $return_value['CUSTOM_BUTTON'] = $button;
+
+        return $return_value;
+    }
+
+    /**
+     * Move the related records of the specified list of id's to the given record.
+     * @param String This module name
+     * @param Array List of Entity Id's from which related records need to be transfered
+     * @param Integer Id of the the Record to which the related records are to be moved
+     */
+    function transferRelatedRecords($module, $transferEntityIds, $entityId)
+    {
+        global $adb, $log;
+        $log->debug("Entering function transferRelatedRecords ($module, $transferEntityIds, $entityId)");
+        foreach ($transferEntityIds as $transferId) {
+
+            // Pick the records related to the entity to be transfered, but do not pick the once which are already related to the current entity.
+            $relatedRecords = $adb->pquery("SELECT relcrmid, relmodule FROM aicrm_crmentityrel WHERE crmid=? AND module=?" .
+                " AND relcrmid NOT IN (SELECT relcrmid FROM aicrm_crmentityrel WHERE crmid=? AND module=?)",
+                array($transferId, $module, $entityId, $module));
+            $numOfRecords = $adb->num_rows($relatedRecords);
+            for ($i = 0; $i < $numOfRecords; $i++) {
+                $relcrmid = $adb->query_result($relatedRecords, $i, 'relcrmid');
+                $relmodule = $adb->query_result($relatedRecords, $i, 'relmodule');
+                $adb->pquery("UPDATE aicrm_crmentityrel SET crmid=? WHERE relcrmid=? AND relmodule=? AND crmid=? AND module=?",
+                    array($entityId, $relcrmid, $relmodule, $transferId, $module));
+            }
+
+            // Pick the records to which the entity to be transfered is related, but do not pick the once to which current entity is already related.
+            $parentRecords = $adb->pquery("SELECT crmid, module FROM aicrm_crmentityrel WHERE relcrmid=? AND relmodule=?" .
+                " AND crmid NOT IN (SELECT crmid FROM aicrm_crmentityrel WHERE relcrmid=? AND relmodule=?)",
+                array($transferId, $module, $entityId, $module));
+            $numOfRecords = $adb->num_rows($parentRecords);
+            for ($i = 0; $i < $numOfRecords; $i++) {
+                $parcrmid = $adb->query_result($parentRecords, $i, 'crmid');
+                $parmodule = $adb->query_result($parentRecords, $i, 'module');
+                $adb->pquery("UPDATE aicrm_crmentityrel SET relcrmid=? WHERE crmid=? AND module=? AND relcrmid=? AND relmodule=?",
+                    array($entityId, $parcrmid, $parmodule, $transferId, $module));
+            }
+        }
+        $log->debug("Exiting transferRelatedRecords...");
+    }
+
+    /*
+	 * Function to get the primary query part of a report for which generateReportsQuery Doesnt exist in module
+	 * @param - $module Primary module name
+	 * returns the query string formed on fetching the related data for report for primary module
+	 */
+    function generateReportsQuery($module)
+    {
+        global $adb;
+        $primary = CRMEntity::getInstance($module);
+
+        vtlib_setup_modulevars($module, $primary);
+        $moduletable = $primary->table_name;
+        $moduleindex = $primary->table_index;
+        $modulecftable = $primary->customFieldTable[0];
+        $modulecfindex = $primary->customFieldTable[1];
+
+        if (isset($modulecftable)) {
+            $cfquery = "inner join $modulecftable as $modulecftable on $modulecftable.$modulecfindex=$moduletable.$moduleindex";
+        } else {
+            $cfquery = '';
+        }
+        $query = "from $moduletable $cfquery
+	        inner join aicrm_crmentity on aicrm_crmentity.crmid=$moduletable.$moduleindex
+			left join aicrm_groups as aicrm_groups" . $module . " on aicrm_groups" . $module . ".groupid = aicrm_crmentity.smownerid
+            left join aicrm_users as aicrm_users" . $module . " on aicrm_users" . $module . ".id = aicrm_crmentity.smownerid
+			left join aicrm_groups on aicrm_groups.groupid = aicrm_crmentity.smownerid
+            left join aicrm_users on aicrm_users.id = aicrm_crmentity.smownerid";
+
+        $fields_query = $adb->pquery("SELECT aicrm_field.fieldname,aicrm_field.tablename,aicrm_field.fieldid from aicrm_field INNER JOIN aicrm_tab on aicrm_tab.name = ? WHERE aicrm_tab.tabid=aicrm_field.tabid AND aicrm_field.uitype IN (10) and aicrm_field.presence in (0,2)", array($module));
+
+        if ($adb->num_rows($fields_query) > 0) {
+            for ($i = 0; $i < $adb->num_rows($fields_query); $i++) {
+                $field_name = $adb->query_result($fields_query, $i, 'fieldname');
+                $field_id = $adb->query_result($fields_query, $i, 'fieldid');
+                $tab_name = $adb->query_result($fields_query, $i, 'tablename');
+                $ui10_modules_query = $adb->pquery("SELECT relmodule FROM aicrm_fieldmodulerel WHERE fieldid=?", array($field_id));
+
+                if ($adb->num_rows($ui10_modules_query) > 0) {
+                    $query .= " left join aicrm_crmentity as aicrm_crmentityRel$module on aicrm_crmentityRel$module.crmid = $tab_name.$field_name and aicrm_crmentityRel$module.deleted=0";
+                    for ($j = 0; $j < $adb->num_rows($ui10_modules_query); $j++) {
+                        $rel_mod = $adb->query_result($ui10_modules_query, $j, 'relmodule');
+                        $rel_obj = CRMEntity::getInstance($rel_mod);
+                        vtlib_setup_modulevars($rel_mod, $rel_obj);
+
+                        $rel_tab_name = $rel_obj->table_name;
+                        $rel_tab_index = $rel_obj->table_index;
+                        $query .= " left join $rel_tab_name as " . $rel_tab_name . "Rel$module on " . $rel_tab_name . "Rel$module.$rel_tab_index = aicrm_crmentityRel$module.crmid";
+                    }
+                }
+            }
+        }
+        return $query;
+
+    }
+
+    /*
+	 * Function to get the secondary query part of a report for which generateReportsSecQuery Doesnt exist in module
+	 * @param - $module primary module name
+	 * @param - $secmodule secondary module name
+	 * returns the query string formed on fetching the related data for report for secondary module
+	 */
+     function generateReportsSecQuery($module, $secmodule)
+    {
+        global $adb;
+        $secondary = CRMEntity::getInstance($secmodule);
+
+        vtlib_setup_modulevars($secmodule, $secondary);
+
+        $tablename = $secondary->table_name;
+        $tableindex = $secondary->table_index;
+        $modulecftable = $secondary->customFieldTable[0];
+        $modulecfindex = $secondary->customFieldTable[1];
+        $query = $this->getRelationQuery($module, $secmodule, "$tablename", "$tableindex");
+        $query .= "     left join aicrm_crmentity as aicrm_crmentity$secmodule on aicrm_crmentity$secmodule.crmid = $tablename.$tableindex AND aicrm_crmentity$secmodule.deleted=0
+                    $cfquery
+                    left join aicrm_groups as aicrm_groups" . $secmodule . " on aicrm_groups" . $secmodule . ".groupid = aicrm_crmentity$secmodule.smownerid
+                    left join aicrm_users as aicrm_users" . $secmodule . " on aicrm_users" . $secmodule . ".id = aicrm_crmentity$secmodule.smownerid";
+
+        $fields_query = $adb->pquery("SELECT aicrm_field.fieldname,aicrm_field.tablename,aicrm_field.fieldid from aicrm_field INNER JOIN aicrm_tab on aicrm_tab.name = ? WHERE aicrm_tab.tabid=aicrm_field.tabid AND aicrm_field.uitype IN (10) and aicrm_field.presence in (0,2)", array($secmodule));
+
+        if ($adb->num_rows($fields_query) > 0) {
+            for ($i = 0; $i < $adb->num_rows($fields_query); $i++) {
+                $field_name = $adb->query_result($fields_query, $i, 'fieldname');
+                $field_id = $adb->query_result($fields_query, $i, 'fieldid');
+                $tab_name = $adb->query_result($fields_query, $i, 'tablename');
+                $ui10_modules_query = $adb->pquery("SELECT relmodule FROM aicrm_fieldmodulerel WHERE fieldid=?", array($field_id));
+
+                if ($adb->num_rows($ui10_modules_query) > 0) {
+                    $query .= " left join aicrm_crmentity as aicrm_crmentityRel$secmodule on aicrm_crmentityRel$secmodule.crmid = $tab_name.$field_name and aicrm_crmentityRel$secmodule.deleted=0";
+                    for ($j = 0; $j < $adb->num_rows($ui10_modules_query); $j++) {
+                        $rel_mod = $adb->query_result($ui10_modules_query, $j, 'relmodule');
+                        $rel_obj = CRMEntity::getInstance($rel_mod);
+                        vtlib_setup_modulevars($rel_mod, $rel_obj);
+
+                        $rel_tab_name = $rel_obj->table_name;
+                        $rel_tab_index = $rel_obj->table_index;
+                        $query .= " left join $rel_tab_name as " . $rel_tab_name . "Rel$secmodule on " . $rel_tab_name . "Rel$secmodule.$rel_tab_index = aicrm_crmentityRel$secmodule.crmid";
+                    }
+                }
+            }
+        }
+
+        return $query;
+    }
+
+    /*
+	 * Function to get the security query part of a report
+	 * @param - $module primary module name
+	 * returns the query string formed on fetching the related data for report for security of the module
+	 */
+    function getListViewSecurityParameter($module)
+    {
+        $tabid = getTabid($module);
+        global $current_user;
+        if ($current_user) {
+            require('user_privileges/user_privileges_' . $current_user->id . '.php');
+            require('user_privileges/sharing_privileges_' . $current_user->id . '.php');
+        }
+        $sec_query .= " and (aicrm_crmentity.smownerid in($current_user->id) or aicrm_crmentity.smownerid in(select aicrm_user2role.userid from aicrm_user2role inner join aicrm_users on aicrm_users.id=aicrm_user2role.userid inner join aicrm_role on aicrm_role.roleid=aicrm_user2role.roleid where aicrm_role.parentrole like '" . $current_user_parent_role_seq . "::%') or aicrm_crmentity.smownerid in(select shareduserid from aicrm_tmp_read_user_sharing_per where userid=" . $current_user->id . " and tabid=" . $tabid . ") or (";
+
+        if (sizeof($current_user_groups) > 0) {
+            $sec_query .= " aicrm_groups.groupid in (" . implode(",", $current_user_groups) . ") or ";
+        }
+        $sec_query .= " aicrm_groups.groupid in(select aicrm_tmp_read_group_sharing_per.sharedgroupid from aicrm_tmp_read_group_sharing_per where userid=" . $current_user->id . " and tabid=" . $tabid . "))) ";
+    }
+
+    /*
+	 * Function to get the security query part of a report
+	 * @param - $module primary module name
+	 * returns the query string formed on fetching the related data for report for security of the module
+	 */
+    function getSecListViewSecurityParameter($module)
+    {
+        $tabid = getTabid($module);
+        global $current_user;
+        if ($current_user) {
+            require('user_privileges/user_privileges_' . $current_user->id . '.php');
+            require('user_privileges/sharing_privileges_' . $current_user->id . '.php');
+        }
+        $sec_query .= " and (aicrm_crmentity$module.smownerid in($current_user->id) or aicrm_crmentity$module.smownerid in(select aicrm_user2role.userid from aicrm_user2role inner join aicrm_users on aicrm_users.id=aicrm_user2role.userid inner join aicrm_role on aicrm_role.roleid=aicrm_user2role.roleid where aicrm_role.parentrole like '" . $current_user_parent_role_seq . "::%') or aicrm_crmentity$module.smownerid in(select shareduserid from aicrm_tmp_read_user_sharing_per where userid=" . $current_user->id . " and tabid=" . $tabid . ") or (";
+
+        if (sizeof($current_user_groups) > 0) {
+            $sec_query .= " aicrm_groups$module.groupid in (" . implode(",", $current_user_groups) . ") or ";
+        }
+        $sec_query .= " aicrm_groups$module.groupid in(select aicrm_tmp_read_group_sharing_per.sharedgroupid from aicrm_tmp_read_group_sharing_per where userid=" . $current_user->id . " and tabid=" . $tabid . "))) ";
+    }
+
+    /*
+	 * Function to get the relation query part of a report
+	 * @param - $module primary module name
+	 * @param - $secmodule secondary module name
+	 * returns the query string formed on relating the primary module and secondary module
+	 */
+    function getRelationQuery($module, $secmodule, $table_name, $column_name)
+    {
+        $tab = getRelationTables($module, $secmodule);
+        //print_r($tab)."<br>";//
+        //exit;
+        foreach ($tab as $key => $value) {
+            $tables[] = $key;
+            $fields[] = $value;
+        }
+        $tabname = $tables[0];
+        $prifieldname = $fields[0][0];
+        $secfieldname = $fields[0][1];
+        $tmpname = $tabname . "tmp" . $secmodule;
+        $condition = "";
+        //echo $tabname.".".$prifieldname;
+        //exit;
+        if (!empty($tables[1]) && !empty($fields[1])) {
+            $condvalue = $tables[1] . "." . $fields[1];
+        } else {
+            $condvalue = $tabname . "." . $prifieldname;
+        }
+        $condition = " {$tmpname}.{$prifieldname} = {$condvalue} ";
+        $entity_check_query = " {$tmpname}.{$secfieldname} IN (SELECT crmid FROM aicrm_crmentity WHERE aicrm_crmentity.deleted=0 AND aicrm_crmentity.setype='{$secmodule}')";
+        $condition_secmod_table = " {$table_name}.{$column_name} = {$tmpname}.{$secfieldname} ";
+        if ($tabname == 'aicrm_crmentityrel') {
+            $condition = " ($condition OR {$tmpname}.{$secfieldname} = $condvalue)  and";
+            $entity_check_query = "({$entity_check_query} OR {$tmpname}.{$prifieldname} IN (SELECT crmid FROM aicrm_crmentity WHERE aicrm_crmentity.deleted=0 AND aicrm_crmentity.setype='{$secmodule}')) ";
+            $condition_secmod_table = "({$condition_secmod_table} OR {$table_name}.{$column_name} = {$tmpname}.{$prifieldname})";
+        } else {
+            $condition .= " and ";
+        }
+
+        $query = " left join {$tabname} as {$tmpname} on {$condition}  {$entity_check_query}";
+        $query .= " LEFT JOIN {$table_name} ON {$condition_secmod_table}";
+        //echo $query;exit;
+        return $query;
+    }
+    /** END **/
+
+    /**
+     * This function handles the import for uitype 10 fieldtype
+     * @param string $module - the current module name
+     * @param string fieldname - the related to field name
+     */
+    function add_related_to($module, $fieldname)
+    {
+        global $adb, $imported_ids, $current_user;
+
+        $related_to = $this->column_fields[$fieldname];
+
+        if (empty($related_to)) {
+            return false;
+        }
+
+        //check if the field has module information; if not get the first module
+        if (!strpos($related_to, "::::")) {
+            $module = getFirstModule($module, $fieldname);
+            $value = $related_to;
+        } else {
+            //check the module of the field
+            $arr = array();
+            $arr = explode("::::", $related_to);
+            $module = $arr[0];
+            $value = $arr[1];
+        }
+
+        $focus1 = CRMEntity::getInstance($module);
+
+        $entityNameArr = getEntityField($module);
+        $entityName = $entityNameArr['fieldname'];
+
+        $query = "SELECT aicrm_crmentity.deleted, $focus1->table_name.*
+					FROM $focus1->table_name
+					INNER JOIN aicrm_crmentity ON aicrm_crmentity.crmid=$focus1->table_name.$focus1->table_index
+						where $entityName=? and aicrm_crmentity.deleted=0";
+        $result = $adb->pquery($query, array($value));
+
+        if (!isset($this->checkFlagArr[$module])) {
+            $this->checkFlagArr[$module] = (isPermitted($module, 'EditView', '') == 'yes');
+        }
+
+        if ($adb->num_rows($result) > 0) {
+            //record found
+            $focus1->id = $adb->query_result($result, 0, $focus1->table_index);
+        } elseif ($this->checkFlagArr[$module]) {
+            //record not found; create it
+            $focus1->column_fields[$focus1->list_link_field] = $value;
+            $focus1->column_fields['assigned_user_id'] = $current_user->id;
+            $focus1->column_fields['modified_user_id'] = $current_user->id;
+            $focus1->save($module);
+
+            $last_import = new UsersLastImport();
+            $last_import->assigned_user_id = $current_user->id;
+            $last_import->bean_type = $module;
+            $last_import->bean_id = $focus1->id;
+            $last_import->save();
+        } else {
+            //record not found and cannot create
+            $this->column_fields[$fieldname] = "";
+            return false;
+        }
+        if (!empty($focus1->id)) {
+            $this->column_fields[$fieldname] = $focus1->id;
+            return true;
+        } else {
+            $this->column_fields[$fieldname] = "";
+            return false;
+        }
+    }
+
+    /**
+     * To keep track of action of field filtering and avoiding doing more than once.
+     *
+     * @var Array
+     */
+    protected $__inactive_fields_filtered = false;
+
+    /**
+     * Filter in-active fields based on type
+     *
+     * @param String $module
+     */
+    function filterInactiveFields($module)
+    {
+        if ($this->__inactive_fields_filtered) {
+            return;
+        }
+
+        global $adb, $mod_strings;
+
+        // Look for fields that has presence value NOT IN (0,2)
+        $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module, array('1'));
+    
+        if ($cachedModuleFields === false) {
+            // Initialize the fields calling suitable API
+            getColumnFields($module);
+            $cachedModuleFields = VTCacheUtils::lookupFieldInfo_Module($module, array('1'));
+        }
+        $hiddenFields = array();
+
+        if ($cachedModuleFields) {
+            foreach ($cachedModuleFields as $fieldinfo) {
+                $fieldLabel = $fieldinfo['fieldlabel'];
+                // NOTE: We should not translate the label to enable field diff based on it down
+                $fieldName = $fieldinfo['fieldname'];
+                $tableName = str_replace("aicrm_", "", $fieldinfo['tablename']);
+                $hiddenFields[$fieldLabel] = array($tableName => $fieldName);
+            }
+        }
+
+        if (isset($this->list_fields)) {
+            $this->list_fields = array_diff_assoc($this->list_fields, $hiddenFields);
+        }
+
+        if (isset($this->search_fields)) {
+            $this->search_fields = array_diff_assoc($this->search_fields, $hiddenFields);
+        }
+
+        //echo "<pre>"; print_r( $this->list_fields); echo "</pre>"; exit;
+        // To avoid re-initializing everytime.
+        $this->__inactive_fields_filtered = true;
+    }
+
+    
+    /** END **/
+    public function insert_log($useid = null,$sql,$params,$crmid,$type,$module){
+
+        global $root_directory;
+
+        $data_parram = [];
+
+        if($type == "Insert"){
+            $data_parram = ["USER :: " => $useid, "Query :: " => $sql];
+            $file_name="Insert_".$module."_".date('d_m_Y').".txt";
+        }else{
+            $data_parram = ["CRMID :: " => $crmid, "USER :: " => $useid, "Query :: " => $sql, "Params :: " => $params];
+            $file_name="Update_".$module."_".date('d_m_Y').".txt";
+        }
+
+        $FileName = $root_directory."/logs/".$file_name;
+
+        $FileHandle = fopen($FileName, 'a+') or die("can't open file");
+        fwrite($FileHandle, date('Y-m-d H:i:s')." == ".print_r($data_parram, true)."================================================================"."\r\n");
+
+        fclose($FileHandle);
+
+    }
+}
+
+?>

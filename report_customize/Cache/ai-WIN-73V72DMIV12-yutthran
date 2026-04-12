@@ -1,0 +1,7 @@
+a:3:{s:4:"time";i:1462845204;s:3:"ttl";i:100000000;s:4:"data";s:595:" <ul class='sidebar-menu'><li class='treeview' id='WC0400'><a href='#'><i class='fa fa-bar-chart-o'></i> <span>Report</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0400'>
+  <li id='WC0457'><a href='http://10.224.29.107/cement/report/cement_weightbridge/rpt_weightbridge_cement'><i class='fa fa-angle-double-right'></i>Outbound WeightBridge</a></li>
+  <li id='WC0458'><a href='http://10.224.29.107/cement/report/cement_weightbridge/rpt_weightbridge_inbound_cement'><i class='fa fa-angle-double-right'></i>Inbound WeightBridge</a></li>
+</ul> 
+</li>
+ </ul>";}

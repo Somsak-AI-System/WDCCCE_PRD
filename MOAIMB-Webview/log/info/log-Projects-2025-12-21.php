@@ -1,0 +1,70 @@
+2025-12-21 11:02:05 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 11:02:05 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24776","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"MKC Renovetion","project_location":"\u0e21\u0e38\u0e01\u0e14\u0e32\u0e2b\u0e32\u0e23"}
+2025-12-21 11:02:05 - Response:: {"count":"0"}
+2025-12-21 11:44:33 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 11:44:33 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"\u0e42\u0e04\u0e23\u0e07\u0e01\u0e32\u0e23\u0e1a\u0e49\u0e32\u0e19\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27 \u0e04\u0e38\u0e13\u0e01\u0e19\u0e01\u0e1e\u0e23 \u0e2d\u0e48\u0e27\u0e21\u0e2a\u0e32\u0e22\u0e2a\u0e35","project_location":"\u0e01\u0e23\u0e38\u0e07\u0e40\u0e17\u0e1e\u0e21\u0e2b\u0e32\u0e19\u0e04\u0e23"}
+2025-12-21 11:44:33 - Response:: {"count":"0"}
+2025-12-21 11:44:36 - URL:: https://wdc.ai-crm.com/WB_Service_AI/users/get_role
+2025-12-21 11:44:36 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":0}
+2025-12-21 11:44:40 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Pricelist
+2025-12-21 11:44:40 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"PriceList","crmid":"515348","event_id":"515348","acion":"view"}
+2025-12-21 11:44:41 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getComments
+2025-12-21 11:44:41 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":0,"search_module":"Projects","crmid":"515348","acion":"view"}
+2025-12-21 11:44:41 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Activity
+2025-12-21 11:44:41 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"Calendar","crmid":"515348","event_id":"515348","acion":"view"}
+2025-12-21 11:44:41 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Documents
+2025-12-21 11:44:41 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"Documents","crmid":"515348","event_id":"515348","acion":"view"}
+2025-12-21 11:44:42 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Quotation
+2025-12-21 11:44:42 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"Quotation","crmid":"515348","projectsid":"515348","acion":"view"}
+2025-12-21 11:44:43 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Samplerequisition
+2025-12-21 11:44:43 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"Samplerequisition","crmid":"515348","event_id":"515348","acion":"view"}
+2025-12-21 11:44:43 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Expenses
+2025-12-21 11:44:43 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24983","limit":20,"offset":"0","search_module":"Expense","crmid":"515348","event_id":"515348","acion":"view"}
+2025-12-21 12:02:35 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 12:02:35 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24912","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"\u0e2b\u0e49\u0e32\u0e07\u0e2b\u0e38\u0e49\u0e19\u0e2a\u0e48\u0e27\u0e19\u0e08\u0e33\u0e01\u0e31\u0e14 \u0e01\u0e30\u0e17\u0e34 \u0e04\u0e25\u0e32\u0e2a\u0e2a\u0e34\u0e01 \u0e44\u0e2d\u0e28\u0e01\u0e23\u0e35\u0e21 ","project_location":"\u0e2a\u0e38\u0e23\u0e32\u0e29\u0e0e\u0e23\u0e4c\u0e18\u0e32\u0e19\u0e35"}
+2025-12-21 12:02:35 - Response:: {"count":"0"}
+2025-12-21 12:56:17 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 12:56:17 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24790","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"\u0e04\u0e2d\u0e19\u0e42\u0e14 EVER PRIME","project_location":"\u0e20\u0e39\u0e40\u0e01\u0e47\u0e15"}
+2025-12-21 12:56:17 - Response:: {"count":"0"}
+2025-12-21 14:11:04 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 14:11:04 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22 \u0e04\u0e2a\u0e25. \u0e2a\u0e39\u0e07 2 \u0e0a\u0e31\u0e49\u0e19 \u0e04\u0e38\u0e13\u0e28\u0e23\u0e35\u0e28\u0e38\u0e20\u0e23","project_location":"\u0e01\u0e23\u0e38\u0e07\u0e40\u0e17\u0e1e\u0e21\u0e2b\u0e32\u0e19\u0e04\u0e23"}
+2025-12-21 14:11:04 - Response:: {"count":"0"}
+2025-12-21 14:11:07 - URL:: https://wdc.ai-crm.com/WB_Service_AI/users/get_role
+2025-12-21 14:11:07 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":0}
+2025-12-21 14:11:11 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Activity
+2025-12-21 14:11:11 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Calendar","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 14:11:11 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getComments
+2025-12-21 14:11:11 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":0,"search_module":"Projects","crmid":"515384","acion":"view"}
+2025-12-21 14:11:12 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Pricelist
+2025-12-21 14:11:12 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"PriceList","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 14:11:12 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Documents
+2025-12-21 14:11:12 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Documents","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 14:11:12 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Quotation
+2025-12-21 14:11:12 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Quotation","crmid":"515384","projectsid":"515384","acion":"view"}
+2025-12-21 14:11:14 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Expenses
+2025-12-21 14:11:14 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Expense","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 14:11:14 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Samplerequisition
+2025-12-21 14:11:14 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Samplerequisition","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 14:11:14 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Questionnaire
+2025-12-21 14:11:14 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24992","limit":20,"offset":"0","search_module":"Questionnaire","crmid":"515384","event_id":"515384","acion":"view"}
+2025-12-21 16:15:29 - URL:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2025-12-21 16:15:29 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":0,"action":"add","crmid":null,"projects_name":"Top Daily \u0e2a\u0e32\u0e02\u0e32\u0e42\u0e09\u0e25\u0e01\u0e2b\u0e25\u0e33 \u0e40\u0e01\u0e32\u0e30\u0e1e\u0e30\u0e07\u0e31\u0e19","project_location":"\u0e2a\u0e38\u0e23\u0e32\u0e29\u0e0e\u0e23\u0e4c\u0e18\u0e32\u0e19\u0e35"}
+2025-12-21 16:15:29 - Response:: {"count":"0"}
+2025-12-21 16:15:32 - URL:: https://wdc.ai-crm.com/WB_Service_AI/users/get_role
+2025-12-21 16:15:32 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":0}
+2025-12-21 16:15:37 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Pricelist
+2025-12-21 16:15:37 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"PriceList","crmid":"515387","event_id":"515387","acion":"view"}
+2025-12-21 16:15:37 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getComments
+2025-12-21 16:15:37 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":0,"search_module":"Projects","crmid":"515387","acion":"view"}
+2025-12-21 16:15:38 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Activity
+2025-12-21 16:15:38 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Calendar","crmid":"515387","event_id":"515387","acion":"view"}
+2025-12-21 16:15:38 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Documents
+2025-12-21 16:15:38 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Documents","crmid":"515387","event_id":"515387","acion":"view"}
+2025-12-21 16:15:38 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Quotation
+2025-12-21 16:15:38 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Quotation","crmid":"515387","projectsid":"515387","acion":"view"}
+2025-12-21 16:15:40 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Samplerequisition
+2025-12-21 16:15:40 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Samplerequisition","crmid":"515387","event_id":"515387","acion":"view"}
+2025-12-21 16:15:40 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Expenses
+2025-12-21 16:15:40 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Expense","crmid":"515387","event_id":"515387","acion":"view"}
+2025-12-21 16:15:40 - URL:: https://wdc.ai-crm.com/WB_Service_AI/Projects/getRelated_Questionnaire
+2025-12-21 16:15:40 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"24737","limit":20,"offset":"0","search_module":"Questionnaire","crmid":"515387","event_id":"515387","acion":"view"}

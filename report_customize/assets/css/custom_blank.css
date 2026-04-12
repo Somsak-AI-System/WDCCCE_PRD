@@ -1,0 +1,141 @@
+@charset "utf-8";
+/* CSS Document */
+body{	font-family:"Times New Roman", Times, serif}
+
+.skin-blue table.display th{
+	 background:#E6E6FA       ;
+	color:#333;
+ 	font-weight:300;
+	text-align:center; border:none;
+	border:1px solid #EEE;
+	
+	font-size:0.75em !important;
+	padding:3px !important; }
+
+.table-responsive table.display td { font-size:0.75em !important;border:1px solid #EEE; }
+.table-responsive table.display tr{ cursor:pointer;
+ }
+
+	
+.skin-blue .table-responsive table.display  td{
+	 background:#FFF;
+	 color:#333;
+	 border:1px solid #EEE;
+	
+ 	 }
+	 
+ 	
+.skin-blue .up{  font-weight: 500;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  -webkit-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  -moz-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  box-shadow: inset 0px -1px 0px 0px rgba(0, 0, 0, 0.09);
+    background-color: #00a65a;
+
+  border-color: #008d4c;
+  color:#FFF;
+  font-size:12px;
+}
+.skin-blue .down{  font-weight: 500;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  -webkit-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  -moz-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  box-shadow: inset 0px -1px 0px 0px rgba(0, 0, 0, 0.09);
+  background-color: #00a65a;
+  border-color: #008d4c;
+  color:#FFF;
+  font-size:12px;
+  }
+  
+  
+  .text-right{ text-align:right !important;   }
+  .text-center{ text-align:center;   }
+  .text-left{ text-align:left;   } 
+  
+  .skin-blue table.display th{
+	font-weight:bold;
+ }
+   .skin-blue table.display td{ padding:5px !important; }
+/**********Mail Style Configuration**********/   
+
+.framemail {
+    cursor: default;
+	padding:0 0 0 0;
+	
+	
+}
+.framemail .window {
+    font-size: 0;
+    margin-top: -1px;
+    overflow: hidden;
+    margin-left: -10px;
+	float:left;
+	
+	
+}
+.framemail .window .mail{
+	
+	position:relative;
+	width:100%;
+
+	}
+.framemail .mail div {
+		float:left;		
+    background-color:#3d3d3d;
+    background-image: -webkit-linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,0%,.05));
+    background-image:    -moz-linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,0%,.05));
+    background-image:     -ms-linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,0%,.05));
+    background-image:      -o-linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,0%,.05));
+    background-image:         linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,0%,.05));
+    border-top: 1px solid #888;
+    position: relative;
+    margin-left:1.25em;
+	margin-bottom:1.25em;
+	list-style:none;
+	
+	padding:1em 1em;
+	
+
+}
+.framemail .mail div:hover {
+    background-color: #5d5b5b;
+}
+
+.framemail .mail div img {
+    background: #819da2;
+    border-radius: 2px;
+    height: 10em;    
+    top: 6px;
+    width: 15em;
+	
+}
+@media screen and (-webkit-min-device-pixel-ratio: 2) and (orientation:portrait) { 
+.framemail .mail div img {
+    background: #819da2;
+    border-radius: 2px;
+    height: 9em;
+    left: 12px;
+    top: 6px;
+    width: 12.25em;
+	
+}
+}
+@media screen and (-webkit-min-device-pixel-ratio: 2)  and (orientation:landscape) { 
+.framemail .mail div img {
+    background: #819da2;
+    border-radius: 2px;
+    height: 10em;
+    left: 12px;
+    top: 6px;
+    width: 13.5em;
+	
+}
+}
+
+

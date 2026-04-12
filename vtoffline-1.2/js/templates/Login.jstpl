@@ -1,0 +1,23 @@
+<form method="POST" action="javascript:void(0);">
+	<table border=0 cellpadding=5 cellspacing=5>
+		<tr>
+			<th align=center colspan=2>{$P.APP.LBL_APP_TITLE}</th>
+		</tr>
+		<tr>
+			<th>{$P.APP.LBL_USERNAME}:</th>
+			<td><input type="text" class="small" name="username" value="" size=30></td>
+		</tr>
+		<tr>
+			<th>{$P.APP.LBL_ACCESSKEY}:</th>
+			<td><input type="password" class="small" name="accesskey" value="" size=30></td>
+		</tr>
+		<tr>
+			<th>{$P.APP.LBL_SERVICEURL}:</th>
+			<td><input type="text" class="small" name="serviceURL" size=30 value=""></td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+			<td><input class="button" type="submit" value="Login" onclick="vtoffline.LoginPage.doLogin(this.form);"></td>
+		</tr>
+	</table>
+</form>

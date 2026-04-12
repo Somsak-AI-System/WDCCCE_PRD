@@ -1,0 +1,42 @@
+2024-07-22 10:45:42 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/users/get_role
+2024-07-22 10:45:42 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0}
+2024-07-22 10:45:44 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/users/get_role
+2024-07-22 10:45:44 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0}
+2024-07-22 10:45:47 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Documents
+2024-07-22 10:45:47 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Documents","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:47 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Activity
+2024-07-22 10:45:47 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Calendar","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:48 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getComments
+2024-07-22 10:45:48 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0,"search_module":"Projects","crmid":"234046","acion":"view"}
+2024-07-22 10:45:48 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Pricelist
+2024-07-22 10:45:48 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"PriceList","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:48 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Quotation
+2024-07-22 10:45:48 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Quotation","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:49 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Expenses
+2024-07-22 10:45:49 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Expense","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:50 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Questionnaire
+2024-07-22 10:45:50 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Questionnaire","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:50 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getComments
+2024-07-22 10:45:50 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0,"search_module":"Projects","crmid":"234046","acion":"view"}
+2024-07-22 10:45:51 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Activity
+2024-07-22 10:45:51 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Calendar","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:51 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Samplerequisition
+2024-07-22 10:45:51 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Samplerequisition","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:52 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Quotation
+2024-07-22 10:45:52 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Quotation","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:53 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Pricelist
+2024-07-22 10:45:53 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"PriceList","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:53 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Documents
+2024-07-22 10:45:53 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Documents","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:54 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Samplerequisition
+2024-07-22 10:45:54 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Samplerequisition","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:54 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/update_status
+2024-07-22 10:45:54 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0,"crmid":"234046","action":"edit","data":[{"projectorder_status":"Cancelled"}]}
+2024-07-22 10:45:54 - Response:: {"Type":"S","Message":"Update Complete","cache_time":"2024-07-22 10:45:54","total":"1","offset":"0","limit":"1","data":{"Crmid":"234046","DocumentsNo":""}}
+2024-07-22 10:45:54 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Questionnaire
+2024-07-22 10:45:54 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Questionnaire","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:45:54 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/getRelated_Expenses
+2024-07-22 10:45:54 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":"0","search_module":"Expense","crmid":"234046","event_id":"234046","acion":"view"}
+2024-07-22 10:47:32 - URL:: https://wdccce.ai-crm.com/WB_Service_AI/Projects/update_status
+2024-07-22 10:47:32 - Parameter ::{"AI-API-KEY":"1234","module":"Projects","userid":"1","limit":20,"offset":0,"crmid":"234046","action":"edit","data":[{"projectorder_status":"On Process"}]}
+2024-07-22 10:47:32 - Response:: {"Type":"S","Message":"Update Complete","cache_time":"2024-07-22 10:47:32","total":"1","offset":"0","limit":"1","data":{"Crmid":"234046","DocumentsNo":""}}

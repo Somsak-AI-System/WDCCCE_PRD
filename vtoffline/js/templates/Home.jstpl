@@ -1,0 +1,34 @@
+<table width=100% cellpadding=0 cellspacing=0 border=0>
+<tr valign=top>
+	<td><b><a href='#' onclick='vtoffline.IndexPage.Init2();'>{$P.APP.LBL_APP}</a></b><span id='vtoffline-mode'></span></td>
+	<td align=right>
+		<span class='progressbar' id='progress-bar'>Loading...</span>
+		<span class='disabled' id='vtoffline-records'></span>
+		<a href='#' onclick='vtoffline.IndexPage.OfflineSetup();' id='vtoffline-setup'><u>Setup Offline</u></a>
+		{$P.APP.LBL_WELCOME} <a href='#'>{$P.USERNAME}</a></span> | <a href='#' onclick='vtoffline.IndexPage.Logout();'>Logout</a>
+	</td>
+</tr>
+</table>
+
+<table width=100% cellpadding=0 cellspacing=0 border=0>
+<tr valign=top>
+	<td width=10%>
+		<ul>
+			{#foreach $P.MODULES as module}
+				<li><a href='#' onclick="vtoffline.IndexPage.Moduleview('{$T.module}')">{$T.module}</a></li>
+			{#/for}
+		</ul>
+	</td>
+
+	<td id='workarea'>
+		
+		<h2 class=big>About</h2>
+
+		<p>Powered by <b>vtiger Webservices</b> and <b>Google Gears</b></p>
+
+		<p>This application can save you records even if you go offline!</p>
+
+		<p>Click <u>Setup Offline</u> now if you have not done yet.</p>	
+	</td>
+</tr>
+</table>

@@ -1,0 +1,9 @@
+<?php
+
+
+//This is the access privilege file
+$is_admin=true;
+
+$user_info=array('user_name'=>'NS1','is_admin'=>'on','user_password'=>'$1$NS$6N4iMV6FnLTofc2pM6Ni10','confirm_password'=>'$1$NS$6N4iMV6FnLTofc2pM6Ni10','first_name'=>'Nattacha','last_name'=>'Sangjan','roleid'=>'H1031','email1'=>'nattacha.s@aisystem.co.th','status'=>'Active','activity_view'=>'Today','lead_view'=>'','currency_id'=>'1','currency_name'=>'Thailand, Baht','currency_code'=>'THB','currency_symbol'=>'฿','conv_rate'=>'1.000','hour_format'=>'','end_hour'=>'','start_hour'=>'','title'=>'','phone_work'=>'','department'=>'','phone_mobile'=>'','reports_to_id'=>'','phone_other'=>'','email2'=>'','phone_fax'=>'','yahoo_id'=>'','phone_home'=>'','imagename'=>'','date_format'=>'dd-mm-yyyy','signature'=>'','description'=>'','reminder_interval'=>'None','internal_mailer'=>'','address_street'=>'','address_city'=>'','address_state'=>'','address_postalcode'=>'','address_country'=>'','asterisk_extension'=>'','use_asterisk'=>'','approve_level1'=>'0','approve_level2'=>'0','approve_level3'=>'0','approve_level4'=>'0','approve_payment'=>'1','section'=>'SYSTEM','sales_org'=>'','accesskey'=>'aPNNkictZlgtkPXo','area'=>'','position'=>'','addressline1'=>'','addressline2'=>'','village'=>'','alley'=>'','road'=>'','region'=>'','province'=>'','district'=>'','subdistrict'=>'','postalcode'=>'','first_name_th'=>'ณัฐชา','last_name_th'=>'แสงจันทร์','title_th'=>'','title_en'=>'','plan_type'=>'--None--','track_report'=>'1','report_type'=>'--None--','bidder'=>'1','create_task'=>'1','default_view'=>'Calendar View','record_id'=>'','record_module'=>'','id'=>'19471');
+
+?>

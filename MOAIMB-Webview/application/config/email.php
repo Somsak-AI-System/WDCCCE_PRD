@@ -1,0 +1,10 @@
+<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+$config['useragent']           = "CodeIgniter";
+$config['protocol']            = "smtp";
+$config['smtp_host']           = "202.142.221.150";
+$config['smtp_port']           = "25";
+$config['smtp_user'] = 'panudda@aisyst.com';
+$config['smtp_pass'] = 'fMaZfp53';
+$config['charset'] = 'utf-8';
+$config['wordwrap'] = TRUE;
+$config['mailtype'] = 'text';

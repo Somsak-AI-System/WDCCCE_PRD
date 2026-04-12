@@ -1,0 +1,16 @@
+HTTP/1.1 302 Object moved
+Connection: close
+Date: Tue, 24 Nov 2009 06:33:30 GMT
+Server: Microsoft-IIS/6.0
+P3P:CP="BUS CUR CONo FIN IVDo ONL OUR PHY SAMo TELo"
+X-UA-Compatible: IE=7
+cache-control: private
+pragma: no-cache
+Location: http://moneycentral.msn.com/investor/common/findsymbol.asp?optType=&Company=%2D&nextpage=/investor/research/profile.asp
+Content-Length: 248
+Content-Type: text/html
+Expires: Tue, 24 Nov 2009 06:33:30 GMT
+Cache-control: private
+
+<head><title>Object moved</title></head>
+<body><h1>Object Moved</h1>This object may be found <a HREF="http://moneycentral.msn.com/investor/common/findsymbol.asp?optType=&amp;Company=%2D&amp;nextpage=/investor/research/profile.asp">here</a>.</body>

@@ -1,0 +1,101 @@
+.sw-theme-arrows {
+    border: none;
+}
+.sw_arraw > li {
+    width: 300px;
+}
+.sw-theme-arrows > ul.step-anchor > li.done > a {
+    border-color: #888888 !important;
+    color: #fff !important;
+    background: #888888 !important;
+}
+.sw-theme-arrows > ul.step-anchor > li.done > a:after {
+    border-left: 30px solid #888888;
+}
+.sw-theme-arrows > ul.step-anchor > li.active > a {
+    border-color: #666666 !important;
+    color: #fff !important;
+    background: #666666 !important;
+}
+.sw-theme-arrows > ul.step-anchor > li.active > a:after {
+    border-left: 30px solid #666666 !important;
+}
+.step_box {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    background-color: #e2e6ea;
+}
+.text-red {
+    color: red;
+}
+
+.k-valid {
+    /*border-color: green!important;*/
+}
+
+.k-popup > .k-group-header {
+    text-align: left!important;
+}
+.k-invalid {
+    border-color: red!important;
+}
+.k-list > .k-item.k-first {
+    padding-top: 2em;
+}
+
+.k-list > .k-state-hover.k-first {
+    padding-top: calc(2em - 1px);
+}
+
+.k-list > .k-item.k-first > .k-group {
+    height: 2em;
+    left: 0;
+}
+
+.k-list > .k-state-hover.k-first > .k-group {
+    top: -1px;
+    left: -1px;
+}
+.icon-remove {
+    cursor: pointer;
+}
+.form-group {
+    margin-bottom: 10px;
+}
+.form-control {
+    height: 30px!important;
+}
+
+.image-radio {
+    cursor: pointer;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 4px solid transparent;
+    margin-bottom: 0;
+    outline: 0;
+}
+.image-radio input[type="radio"] {
+    display: none;
+}
+.image-radio-checked {
+    border-color: #4783B0;
+}
+.image-radio .glyphicon {
+    position: absolute;
+    color: #4A79A3;
+    background-color: #fff;
+    padding: 10px;
+    top: 5px;
+    /*right: 15px;*/
+}
+.image-radio-checked .glyphicon {
+    display: block !important;
+}
+.btn-toolbar .btn, .btn-toolbar .btn-group, .btn-toolbar .input-group {
+    float: none;
+}
+.sw-theme-arrows > .sw-toolbar-bottom {
+    text-align: center;
+}

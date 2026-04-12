@@ -1,0 +1,30 @@
+.tabs {
+    padding-left: 0px;
+}
+
+.tabs-header {
+    border-color: transparent;
+}
+
+.tabs-header, .tabs-tool {
+    background-color: transparent;
+}
+
+.tabs li a.tabs-inner {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.tabs-panels {
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 0px;
+}
+
+.tabs-panels > .panel > .panel-body {
+    background-color: transparent;
+}
+
+.calendar {
+    display: block;
+}

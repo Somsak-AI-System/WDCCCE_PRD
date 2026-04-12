@@ -1,0 +1,36 @@
+a:3:{s:4:"time";i:1412233831;s:3:"ttl";i:100000000;s:4:"data";a:1:{s:12:"session_data";s:2761:" <ul class='sidebar-menu'><li class='treeview'><a href='#'><i class='fa fa-dashboard'></i> <span>Queuing</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu'>
+  <li><a href='http://localhost/sccc/queuing/driver_dashboard'><i class='fa fa-angle-double-right'></i>Cement - Driver Dashboard</a></li>
+  <li><a href='http://localhost/sccc/queuing/queue_monitoring'><i class='fa fa-angle-double-right'></i>Cement Monitoring</a></li>
+  <li><a href='http://localhost/sccc/queuing/geocycle_dashboard'><i class='fa fa-angle-double-right'></i>Geocycle - Driver Dashboard</a></li>
+  <li><a href='http://localhost/sccc/queuing/geocycle_monitoring'><i class='fa fa-angle-double-right'></i>Geocycle Monitoring</a></li>
+</ul> 
+</li>
+<li class='treeview'><a href='#'><i class='fa fa-dashboard'></i> <span>Report</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu'>
+  <li class='treeview'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>Geocycle</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu'>
+  <li class='treeview'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>Customer Truck Report</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu'>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_activity'><i class='fa fa-angle-double-right'></i>Truck Activity</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_complete_load'><i class='fa fa-angle-double-right'></i>Truck Load Completed</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_station_monitoring'><i class='fa fa-angle-double-right'></i>Station Monitoring</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_monitoring_license'><i class='fa fa-angle-double-right'></i>Truck Monitoring</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_Truck_Delay'><i class='fa fa-angle-double-right'></i>Truck Delay Report</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_truck_tracking'><i class='fa fa-angle-double-right'></i>Truck Tracking (Map)</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_rpt_unload_performance'><i class='fa fa-angle-double-right'></i>รายงานประสิทธิภาพการรับสินค้า</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_rpt_loading_by_point'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าตามจุดลงสินค้า</a></li>
+  <li><a href='http://localhost/sccc/report/geocycle_monitoring/geo_rpt_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน</a></li>
+</ul> 
+</li> 
+</ul> 
+</li> 
+</ul> 
+</li>
+ </ul>";}}

@@ -1,0 +1,15 @@
+2024-12-28 13:00:32 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/api/list_content
+2024-12-28 13:00:34 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/api/list_content
+2024-12-28 13:01:20 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 13:01:33 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 13:01:35 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 13:01:38 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2024-12-28 13:01:39 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexinsert/insert_content
+2024-12-28 15:27:33 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/api/list_content
+2024-12-28 15:27:34 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/api/list_content
+2024-12-28 15:29:13 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 15:29:16 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 15:29:17 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 15:29:18 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexselect/list_select
+2024-12-28 15:30:43 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/projects/checkDup
+2024-12-28 15:30:44 - Begin:: https://wdc.ai-crm.com/WB_Service_AI/indexinsert/insert_content

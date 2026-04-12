@@ -1,0 +1,1477 @@
+<?php /* Smarty version 2.6.18, created on 2026-04-08 16:51:28
+         compiled from Inventory/InventoryDetailView.tpl */ ?>
+<?php require_once(SMARTY_CORE_DIR . 'core.load_plugins.php');
+smarty_core_load_plugins(array('plugins' => array(array('modifier', 'aicrm_imageurl', 'Inventory/InventoryDetailView.tpl', 518, false),array('modifier', 'replace', 'Inventory/InventoryDetailView.tpl', 733, false),array('modifier', 'getTranslatedString', 'Inventory/InventoryDetailView.tpl', 898, false),)), $this); ?>
+<link rel="stylesheet" type="text/css" media="all" href="jscalendar/calendar-win2k-cold-1.css">
+<script type="text/javascript" src="jscalendar/calendar.js"></script>
+<script type="text/javascript" src="jscalendar/lang/calendar-en.js"></script>
+<script type="text/javascript" src="jscalendar/calendar-setup.js"></script>
+
+<script type="text/javascript" src="asset/js/jquery-1.8.3.min.js"></script>
+<script type="text/javascript" src="asset/js/jquery.easyui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="asset/css/metro-blue/easyui.css">
+
+<script type="text/javascript" src="include/js/reflection.js"></script>
+<script src="include/scriptaculous/scriptaculous.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/dtlviewajax.js"></script>
+
+<link rel="stylesheet" type="text/css" href="asset/css/bootstrap-tagsinput.css">
+<script language="JavaScript" type="text/javascript" src="asset/js/bootstrap.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="asset/js/bootstrap-tagsinput.min.js"></script>
+
+<script type="text/javascript" src="asset/js/jquery.multi-select.js"></script>
+
+<script type="text/javascript">
+     jQuery.noConflict();
+</script>
+
+<script>
+<?php echo '
+var gVTModule = \'{$smarty.request.module|@vtlib_purify}\';
+function callConvertLeadDiv(id)
+{   
+    new Ajax.Request(
+        \'index.php\',
+        {queue: {position: \'end\', scope: \'command\'},
+            method: \'post\',
+            postBody: \'module=Leads&action=LeadsAjax&file=ConvertLead&record=\'+id,
+            onComplete: function(response) {
+                $("convertleaddiv").innerHTML=response.responseText;
+                eval($("conv_leadcal").innerHTML);
+            }
+        }
+    );
+}
+
+function openSettingEmailDialog(crmID, Module, tbtEmailLog){
+    if(tbtEmailLog === \'no\'){
+        alert(\'ยังไม่มีรายการ Account ใน moreinfo\');
+        return false;
+    }
+    jQuery.post(\'emailSettingDialog.php\', {crmID:crmID, Module:Module}, function(html){
+        jQuery(\'#settingemail-dialog\').window({
+            title: \'ตั้งเวลาส่ง\',
+            width:500,
+            height:250,
+            modal:true,
+            maximizable: false,
+            minimizable: false
+        }).html(html);
+    })
+}
+
+function saveSettingEmail(crmID, Module){
+    var type = jQuery(`input[name="type"]:checked`).val();
+    if(type === \'\') return false;
+    var date = \'\';
+    var time = \'\';
+    if(type === \'2\'){
+        date = jQuery(\'#date\').val();
+        time = jQuery(\'#time\').val();
+
+        if(date === \'\' || time === \'\'){
+            alert(\'กรุณาระบบ วัน เวลา\');
+            return false;
+        }
+    }
+
+    jQuery.post(\'emailSettingSave.php\', {Module:Module, crmID:crmID, type:type, date:date, time:time}, function(rs){
+        jQuery(\'#settingemail-dialog\').window(\'close\');
+
+        if(type === \'1\'){
+            switch(Module){
+                case \'Surveysmartemail\':
+                    window.open(\'sendemail_Surveysmartemail_setup.php?crmid=\'+crmID,\'Application\',\'resizable=0,left=200,top=50,width=630,height=390,toolbar=no,scrollbars=no,menubar=no,location=no\')
+                    break;
+                case \'Smartquestionnaire\':
+                    window.open(\'sendemail_SmartquestionnaireCampaigns_setup.php?crmid=\'+crmID,\'Application\',\'resizable=0,left=200,top=50,width=630,height=390,toolbar=no,scrollbars=no,menubar=no,location=no\')
+                    break;
+            }
+        }else if(type === \'2\'){
+            window.location.reload();
+        }
+
+    })
+}
+
+function exportDataSmartQuestionnaire(crmID, questionnairetemplateid)
+{
+     jQuery.messager.progress({
+         title: \'Please waiting\',
+         msg: \'Loading ...\',
+         text: \'LOADING\'
+     });
+
+    jQuery.post(\'smartQuestionnaireExport.php\', {crmID:crmID, questionnairetemplateid:questionnairetemplateid}, function(rs){
+        jQuery("body").append(`<iframe src=\'${rs.filePath}\' style=\'display: none;\' ></iframe>`);
+        // console.log(rs)
+        jQuery.messager.progress(\'close\');
+    },\'json\')
+}
+function showHideStatus(sId,anchorImgId,sImagePath)
+{
+    oObj = eval(document.getElementById(sId));
+    if(oObj.style.display == \'block\')
+    {
+        oObj.style.display = \'none\';
+        eval(document.getElementById(anchorImgId)).src =  \'themes/images/slidedown_b2.png\';
+        eval(document.getElementById(anchorImgId)).alt = \'Display\';
+        eval(document.getElementById(anchorImgId)).title = \'Display\';
+    }
+    else
+    {
+        oObj.style.display = \'block\';
+        // eval(document.getElementById(anchorImgId)).src = \'themes/images/activate.gif\';
+        eval(document.getElementById(anchorImgId)).src = \'themes/softed/images/slidedown_b.png\';
+        eval(document.getElementById(anchorImgId)).alt = \'Hide\';
+        eval(document.getElementById(anchorImgId)).title = \'Hide\';
+    }
+}
+<!-- End Of Code modified by SAKTI on 10th Apr, 2008 -->
+
+<!-- Start of code added by SAKTI on 16th Jun, 2008 -->
+function setCoOrdinate(elemId){
+    oBtnObj = document.getElementById(elemId);
+    var tagName = document.getElementById(\'lstRecordLayout\');
+    leftpos  = 0;
+    toppos = 0;
+    aTag = oBtnObj;
+    do{
+      leftpos  += aTag.offsetLeft;
+      toppos += aTag.offsetTop;
+    } while(aTag = aTag.offsetParent);
+    tagName.style.top= toppos + 20 + \'px\';
+    tagName.style.left= leftpos - 276 + \'px\';
+}
+
+function getListOfRecords(obj, sModule, iId,sParentTab)
+{
+        new Ajax.Request(
+        \'index.php\',
+        {queue: {position: \'end\', scope: \'command\'},
+            method: \'post\',
+            postBody: \'module=Users&action=getListOfRecords&ajax=true&CurModule=\'+sModule+\'&CurRecordId=\'+iId+\'&CurParentTab=\'+sParentTab,
+            onComplete: function(response) {
+                sResponse = response.responseText;
+                $("lstRecordLayout").innerHTML = sResponse;
+                Lay = \'lstRecordLayout\';
+                var tagName = document.getElementById(Lay);
+                var leftSide = findPosX(obj);
+                var topSide = findPosY(obj);
+                var maxW = tagName.style.width;
+                var widthM = maxW.substring(0,maxW.length-2);
+                var getVal = parseInt(leftSide) + parseInt(widthM);
+                if(getVal  > document.body.clientWidth ){
+                    leftSide = parseInt(leftSide) - parseInt(widthM);
+                    tagName.style.left = leftSide + 230 + \'px\';
+                    tagName.style.top = topSide + 20 + \'px\';
+                }else{
+                    tagName.style.left = leftSide + 230 + \'px\';
+                }
+                setCoOrdinate(obj.id);
+                tagName.style.display = \'block\';
+                tagName.style.visibility = "visible";
+            }
+        }
+    );
+}
+
+function setCoOrdinatebutton(elemId){
+    oBtnObj = document.getElementById(elemId);
+    var tagName = document.getElementById(\'lstRecordLayout\');
+    leftpos  = 0;
+    toppos = 0;
+    aTag = oBtnObj;
+    do{
+      leftpos  += aTag.offsetLeft;
+      toppos += aTag.offsetTop;
+    } while(aTag = aTag.offsetParent);
+    tagName.style.top= toppos - 300 + \'px\';
+    tagName.style.left= leftpos - 276 + \'px\';
+}
+
+function new_comments(id,module){
+    var msg = \'\';
+    url = \'plugin/Comment/newcomment.php?crmid=\'+id+\'&module=\'+module;
+    jQuery(\'#dialog\').window({
+        title: \'Comments\',
+        width: 600,
+        height: 200,
+        closed: false,
+        cache: false,
+        href: url,
+        modal: true,
+        minimizable:false,
+        maximizable:false,
+        collapsible:false,
+    });
+}
+
+function editTableItem(id){
+    var msg = \'\';
+    var grand_total = jQuery(\'#hdn_grandTotal\').data(\'id\');
+    url = \'get_delivery_date.php?crmid=\'+id+\'&grand_total=\'+grand_total;
+    jQuery(\'#dialog\').window({
+        title: \'Comments\',
+        width: 1200,
+        height: 700,
+        closed: false,
+        cache: false,
+        href: url,
+        modal: true,
+        minimizable:false,
+        maximizable:false,
+        collapsible:false,
+    });
+}
+
+function getListOfRecordsbutton(obj, sModule, iId,sParentTab)
+{
+        new Ajax.Request(
+        \'index.php\',
+        {queue: {position: \'end\', scope: \'command\'},
+            method: \'post\',
+            postBody: \'module=Users&action=getListOfRecords&ajax=true&CurModule=\'+sModule+\'&CurRecordId=\'+iId+\'&CurParentTab=\'+sParentTab,
+            onComplete: function(response) {
+                sResponse = response.responseText;
+                //$("lstRecordLayout").innerHTML = sResponse;
+                document.getElementById("lstRecordLayout").innerHTML = sResponse;
+
+                Lay = \'lstRecordLayout\';
+                var tagName = document.getElementById(Lay);
+                var leftSide = findPosX(obj);
+                var topSide = findPosY(obj);
+                var maxW = tagName.style.width;
+                var widthM = maxW.substring(0,maxW.length-2);
+                var getVal = parseInt(leftSide) + parseInt(widthM);
+                if(getVal  > document.body.clientWidth ){
+                    leftSide = parseInt(leftSide) - parseInt(widthM);
+                    tagName.style.left = leftSide + 230 + \'px\';
+                    tagName.style.top = topSide + 20 + \'px\';
+                }else{
+                    tagName.style.left = leftSide + 230 + \'px\';
+                }
+                setCoOrdinatebutton(obj.id);
+                tagName.style.display = \'block\';
+                tagName.style.visibility = "visible";
+            }
+        }
+    );
+}
+
+function confirm_approve(approve_status,id,level){
+    var pricetype = jQuery(\'#pricetype\').val();
+    if(pricetype === \'\'){
+        alert(\'Price type is null\');
+         return false;
+    }
+    var msg = \'\';
+    if(approve_status == \'Approve\'){
+        msg = \'ต้องการอนุมัติรายการ\';
+        url = \'quotation_status.php\';
+    }else if ( approve_status ==\'Request_Approve\')  {
+        msg = \'ต้องการขออนุมัติรายการ\';
+        url = \'quotation_status.php\';
+    }else if ( approve_status ==\'Complete\') {
+        msg = \'ต้องการปิดการขาย\';
+        url = \'quotation_status.php\';
+    }else if ( approve_status ==\'Cancel_Quotation\') {
+        msg = \'ต้องการยกเลิกรายการ\';
+        url = \'quotation_cancel.php?crmid=\'+id+\'&approve_status=\'+approve_status;
+    }else{
+        msg = \'ต้องการไม่อนุมัติรายการ\';
+        url = \'quotation_cancel.php?crmid=\'+id+\'&level=\'+level+\'&approve_status=\'+approve_status;
+    }
+
+    var dlg = jQuery.messager.confirm({
+        title: \'Confirm\',
+        msg: msg,
+        buttons:[{
+            text: \'Yes\',
+            onClick: function(){
+
+                jQuery(\'.\'+approve_status).attr(\'disabled\',\'disabled\');
+                jQuery(\'.\'+approve_status).css({
+                    \'background-color\' : \'#cccccc\',
+                    \'border\': \'1px solid #999999\',
+                    \'color\': \'#666666\'});
+                if(approve_status == \'Cancel_Approve\'){
+                    dlg.dialog("close");
+                    jQuery(\'#dialog\').window({
+                        title: \'Cancel Approve\',
+                        width: 550,
+                        height: 250,
+                        closed: false,
+                        cache: false,
+                        href: url,
+                        modal: true,
+                        minimizable:false,
+                        maximizable:false,
+                        collapsible:false,
+                    });
+                }else if(approve_status == \'Cancel_Quotation\'){
+                    dlg.dialog("close");
+                    jQuery(\'#dialog\').window({
+                        title: \'Cancel Quotation\',
+                        width: 550,
+                        height: 250,
+                        closed: false,
+                        cache: false,
+                        href: url,
+                        modal: true,
+                        minimizable:false,
+                        maximizable:false,
+                        collapsible:false,
+                    });
+                }else{
+                    
+                    jQuery.messager.progress({
+                        title:\'Please wait...\',
+                        text:\'PROCESSING\'
+                    });
+
+                    dlg.dialog(\'destroy\');
+                    jQuery.ajax({
+                       type: "POST",
+                       url: url,
+                       cache: false,
+                       data: {crmid:id,quotationstatus:approve_status,level:level},
+                       dataType: "json",
+                       success: function(returndate){
+                        if(returndate[\'status\'] == true){
+                            jQuery.messager.progress(\'close\');  
+                            jQuery.messager.alert({
+                                title: \'Info\',
+                                msg: returndate[\'msg\'],
+                                fn: function(){
+                                    location.reload();
+                                }
+                            });
+
+                        }else{
+                            jQuery.messager.progress(\'close\');
+                            jQuery.messager.alert(\'Info\',returndate[\'msg\'],\'info\');
+                        }//if
+                       }//success
+                     });//ajax
+
+                }
+
+            }//onclick
+        },{
+            text: \'No\',
+            onClick: function(){
+            dlg.dialog(\'destroy\');
+            }
+        }]
+    });
+}
+
+
+function send_data_to_erp(id){
+    var msg = \'ส่งข้อมูลไปยังระบบ ERP\';
+    var url = \'send_data_to_erp.php\';
+
+    jQuery(\'button.send_data_to_erp\').hide();
+
+    var pricetype = jQuery(\'#pricetype\').val();
+    if(pricetype === \'\'){
+        alert(\'Price type is null\');
+         return false;
+    }
+    
+    var dlg = jQuery.messager.confirm({
+        title: \'Confirm\',
+        msg: msg,
+        buttons:[{
+            text: \'Yes\',
+            onClick: function(){
+
+               
+                    
+                    jQuery.messager.progress({
+                        title:\'Please wait...\',
+                        text:\'PROCESSING\'
+                    });
+
+                    dlg.dialog(\'destroy\');
+                    jQuery.ajax({
+                       type: "POST",
+                       url: url,
+                       cache: false,
+                       data: {crmid:id},
+                       dataType: "json",
+                       success: function(returndate){
+                        console.log(\'returndate\',returndate);
+                        if(returndate[\'status\'] == true){
+                            jQuery.messager.progress(\'close\');  
+                            jQuery.messager.alert({
+                                title: \'Info\',
+                                msg: returndate[\'msg\'],
+                                fn: function(){
+                                    location.reload();
+                                }
+                            });
+                        }else{
+                            jQuery(\'button.send_data_to_erp\').show();
+                            jQuery.messager.progress(\'close\');
+                            jQuery.messager.alert(\'Info\',returndate[\'msg\'],\'info\');
+                        }//if
+                       }//success
+                     });//ajax
+
+                
+
+            }//onclick
+        },{
+            text: \'No\',
+            onClick: function(){
+            dlg.dialog(\'destroy\');
+            }
+        }]
+    });
+}
+
+<!-- End of code added by SAKTI on 16th Jun, 2008 -->
+'; ?>
+
+function tagvalidate()
+{
+    if(trim(document.getElementById('txtbox_tagfields').value) != ''){
+        //jQuery("tagCloudDisplay").style.border='0px';
+        //jQuery("error-tag").style.display='none';
+        jQuery('.tagCloudDisplay').css('border','0px');
+        jQuery('.error-tag').css('display','none');
+
+        SaveTag('txtbox_tagfields','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['MODULE']; ?>
+');
+
+        jQuery('.bootstrap-tagsinput').css('border-color','#ccc');
+        /*jQuery( ".tag" ).remove();
+        jQuery('#txtbox_tagfields').tagsinput('removeAll');*/
+    }
+    else
+    {
+        jQuery('.bootstrap-tagsinput').css('border-color','red');
+        /*alert("<?php echo $this->_tpl_vars['APP']['PLEASE_ENTER_TAG']; ?>
+");*/
+        return false;
+    }
+}
+function ClearTag(){
+    jQuery('#txtbox_tagfields').tagsinput('removeAll');
+}
+function keyvalue(){
+    console.log(123);
+}
+function DeleteTag(id,recordid)
+{
+    $("vtbusy_info").style.display="inline";
+    Effect.Fade('tag_'+id);
+    new Ajax.Request(
+        'index.php',
+                {queue: {position: 'end', scope: 'command'},
+                        method: 'post',
+                        postBody: "file=TagCloud&module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&action=<?php echo $this->_tpl_vars['MODULE']; ?>
+Ajax&ajxaction=DELETETAG&recordid="+recordid+"&tagid=" +id,
+                        onComplete: function(response) {
+                        getTagCloud();
+                        $("vtbusy_info").style.display="none";
+                        }
+                }
+        );
+}
+
+//Added to send a file, in Documents module, as an attachment in an email
+function sendfile_email()
+{
+    filename = $('dldfilename').value;
+
+    document.DetailView.submit();
+
+    OpenCompose(filename,'Documents');
+
+}
+
+</script>
+<?php 
+    global $converted;
+ ?>
+
+<span id="crmspanid" style="display:none;position:absolute;"  onmouseover="show('crmspanid');">
+   <a class="link"  align="right" href="javascript:;"><?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON']; ?>
+</a>
+</span>
+<div id="convertleaddiv" style="display:block;position:absolute;left:225px;top:150px;"></div>
+<div id="lstRecordLayout" class="layerPopup" style="display:none;width:325px;height:300px;"></div>
+
+<div id="dialog" style="display:none;background-color: #FFF">Dialog Content.</div>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+<tr>
+    <td>
+        <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => 'Buttons_List1.tpl', 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+
+<!-- Contents -->
+<table border=0 cellspacing=0 cellpadding=0 width=99% align=center>
+<tr>
+    <td valign=top><img src="<?php echo aicrm_imageurl('showPanelTopLeft.gif', $this->_tpl_vars['THEME']); ?>
+"></td>
+    <td class="showPanelBg" valign=top width=100%>
+        <!-- PUBLIC CONTENTS STARTS-->
+        <div class="small" style="padding:10px" >
+
+        <table border="0" cellpadding="0" cellspacing="0" width="95%">
+            <tr style="line-height: 20px;">
+                <td style="padding-top: 10px;">
+                                        <?php $this->assign('USE_ID_VALUE', $this->_tpl_vars['MOD_SEQ_ID']); ?>
+                    <?php if ($this->_tpl_vars['USE_ID_VALUE'] == ''): ?> <?php $this->assign('USE_ID_VALUE', $this->_tpl_vars['ID']); ?> <?php endif; ?>
+                    <span class="dvHeaderText">[ <?php echo $this->_tpl_vars['USE_ID_VALUE']; ?>
+ ] <?php echo $this->_tpl_vars['NAME']; ?>
+ -  <?php echo $this->_tpl_vars['APP'][$this->_tpl_vars['SINGLE_MOD']]; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_INFORMATION']; ?>
+</span>&nbsp;&nbsp;&nbsp;<span class="small" style="font-family: PromptMedium; color: #A9A9A9;"><?php echo $this->_tpl_vars['UPDATEINFO']; ?>
+</span>&nbsp;<span id="vtbusy_info" style="display:none;" valign="bottom"><img src="<?php echo aicrm_imageurl('vtbusy.gif', $this->_tpl_vars['THEME']); ?>
+" border="0"></span><span id="vtbusy_info" style="visibility:hidden;" valign="bottom"><img src="<?php echo aicrm_imageurl('vtbusy.gif', $this->_tpl_vars['THEME']); ?>
+" border="0"></span>
+                </td>
+            </tr>
+         </table>
+        <hr style="border: 1px solid #F7F7F7;">
+        <br>
+
+        <!-- Account details tabs -->
+        <table border=0 cellspacing=0 cellpadding=0 width=95% align=center>
+        <tr>
+            <td>
+                <table border=0 cellspacing=0 cellpadding=3 width=100% class="small">
+                <tr>
+                    <td class="dvtTabCache" style="width:10px" nowrap>&nbsp;</td>
+                    <td class="dvtTabCache" style="width:10px" nowrap>&nbsp;</td>
+
+                    <td class="dvtSelectedCell" align=center nowrap><?php echo $this->_tpl_vars['APP'][$this->_tpl_vars['SINGLE_MOD']]; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_INFORMATION']; ?>
+</td>
+                    <!-- <td class="dvtTabCache" style="width:10px">&nbsp;</td> -->
+                    <?php if ($this->_tpl_vars['SinglePane_View'] == 'false'): ?>
+                    <td class="dvtUnSelectedCell" align=center nowrap><a href="index.php?action=CallRelatedList&module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&record=<?php echo $this->_tpl_vars['ID']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+"><?php echo $this->_tpl_vars['APP']['LBL_MORE']; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_INFORMATION']; ?>
+</a></td>
+                    <?php endif; ?>
+                    <td class="dvtUnSelectedCell" align=center nowrap><a href="index.php?action=TimelineList&module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&record=<?php echo $this->_tpl_vars['ID']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+"><?php echo $this->_tpl_vars['APP']['LBL_TIMELINE']; ?>
+</a></td>
+                    <td class="dvtTabCache" align="right" style="width:100%">
+                            <?php 
+                                global $campaignid,$viewlog;
+                             ?>
+
+                            <?php if ($this->_tpl_vars['EDIT_DUPLICATE'] == 'permitted' || $this->_tpl_vars['is_permmited'] == true): ?>
+                                <?php if ($this->_tpl_vars['flagassign'] == true && $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา'): ?>
+                                    <button title="Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','4');" type="button" name="requestapprove" value="Approve">
+                                        <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Approve
+                                    </button>
+                                <?php endif; ?>
+
+                                <?php if ($this->_tpl_vars['quotation_status'] == 'ขออนุมัติใบเสนอราคา' && $this->_tpl_vars['approveflg'] == true): ?>
+                                    <?php if ($this->_tpl_vars['levelflg'] == '4'): ?>
+                                        <button title="Final Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+');" type="button" name="finalapprove" value="Final Approve">
+                                            <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Final Approve
+                                        </button>&nbsp;
+                                        <button title="Cancel Final Approve" class="crmbutton small cancel Cancel_Approve" onclick="confirm_approve('Cancel_Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+')">
+                                            <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Final Approve
+                                        </button>&nbsp;
+                                    <?php else: ?>
+                                        <button title="Approve" class="crmbutton small edit Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+');" type="button" name="approvelevel" value="Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+">
+                                            <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+
+                                        </button>&nbsp;
+                                        <button title="Cancel Approve" class="crmbutton small cancel Cancel_Approve" onclick="confirm_approve('Cancel_Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+')">
+                                            <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+
+                                        </button>&nbsp;
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <?php if ($this->_tpl_vars['flagassign'] == true && ( $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา' || $this->_tpl_vars['quotation_status'] == 'ขออนุมัติใบเสนอราคา' )): ?>
+                                    <button title="Cancel Quotation" class="crmbutton small cancel Cancel_Quotaion" onclick="confirm_approve('Cancel_Quotation','<?php echo $this->_tpl_vars['ID']; ?>
+','')">
+                                        <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Quotaion
+                                    </button>&nbsp;
+                                <?php endif; ?>
+
+                                 <?php if (( $this->_tpl_vars['quotation_status'] == 'อนุมัติใบเสนอราคา' && $this->_tpl_vars['sono'] == '' && $this->_tpl_vars['flag_erp_response_status'] != '1' )): ?>
+                                    <button title="Send to ERP" class="crmbutton small edit btnedit send_data_to_erp" onclick="send_data_to_erp('<?php echo $this->_tpl_vars['ID']; ?>
+');" type="button" name="Send to ERP" value="Send to ERP">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="send" data-lucide="send" class="lucide lucide-send block mx-auto" style="vertical-align: middle;">
+                                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                        </svg>&nbsp;Send to ERP
+                                    </button>
+                                    &nbsp;
+                                <?php endif; ?>
+
+                                                                
+                                                                
+                                <?php if ($this->_tpl_vars['flagassign'] == true && ( $this->_tpl_vars['convertflag'] == '0' && $this->_tpl_vars['quotation_status'] == 'ปิดการขาย' )): ?>
+                                    <!-- <a href="index.php?module=Salesorder&action=EditView&return_action=DetailView&parenttab=Sales&return_module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&quotesid=<?php echo $this->_tpl_vars['ID']; ?>
+" >
+                                    <button title="Convert Sales Order" class="crmbutton small success" onclick="this.form.action.value='EditView';this.form.module.value='Salesorder'" >
+                                        <img src="themes/softed/images/revise.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Convert To Sales Order
+                                    </button>
+                                    </a>&nbsp; -->
+                                    
+                                <?php endif; ?>
+
+                            <?php endif; ?>
+
+                            <?php if ($this->_tpl_vars['EDIT_DUPLICATE'] == 'permitted'): ?>
+
+                                <?php if (( $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา' || $this->_tpl_vars['sono'] == '' && $this->_tpl_vars['quotation_status'] != 'ยกเลิกใบเสนอราคา' ) && $this->_tpl_vars['flag_erp_response_status'] != '1'): ?>
+                                    <button title="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_KEY']; ?>
+" class="crmbutton small btnedit" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='<?php echo $this->_tpl_vars['ID']; ?>
+';DetailView.module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; submitFormForAction('DetailView','EditView');" type="button" name="Edit" value="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_LABEL']; ?>
+">
+                                        <img src="themes/softed/images/massedit_w.png" border="0" style="width: 15px;height: 17px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_LABEL']; ?>
+
+                                    </button>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                                
+                            <button title="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_KEY']; ?>
+" class="crmbutton small btnduplicate" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='DetailView'; DetailView.isDuplicate.value='true';DetailView.module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; submitFormForAction('DetailView','EditView');" type="button" name="Duplicate" value="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_LABEL']; ?>
+">
+                            <img src="themes/softed/images/duplicate_w.png" border="0" style="width: 15px; height: 17px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_LABEL']; ?>
+
+                            </button>
+                           
+
+
+                            <?php if ($this->_tpl_vars['DELETE'] == 'permitted'): ?>
+                                <?php if ($this->_tpl_vars['flagassign'] == true && $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา'): ?>
+                                    <button title="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_KEY']; ?>
+" class="crmbutton small delete btndelete" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='index'; <?php if ($this->_tpl_vars['MODULE'] == 'Accounts'): ?> var confirmMsg = '<?php echo $this->_tpl_vars['APP']['NTC_ACCOUNT_DELETE_CONFIRMATION']; ?>
+' <?php else: ?> var confirmMsg = '<?php echo $this->_tpl_vars['APP']['NTC_DELETE_CONFIRMATION']; ?>
+' <?php endif; ?>; submitFormForActionWithConfirmation('DetailView', 'Delete', confirmMsg);" type="button" name="Delete" value="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_LABEL']; ?>
+">
+                                        <img src="themes/softed/images/delete_w.png" border="0" style="width: 15px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_LABEL']; ?>
+
+                                    </button>
+                                <?php endif; ?>                                  
+                            <?php endif; ?>
+
+
+                        <?php if ($this->_tpl_vars['privrecord'] != ''): ?>
+
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" onclick="location.href='index.php?module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&viewtype=<?php echo $this->_tpl_vars['VIEWTYPE']; ?>
+&action=DetailView&record=<?php echo $this->_tpl_vars['privrecord']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+&start=<?php echo $this->_tpl_vars['privrecordstart']; ?>
+'" name="privrecord" value="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" src="<?php echo aicrm_imageurl('rec_prev.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+
+                        <?php else: ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" src="<?php echo aicrm_imageurl('rec_prev.png', $this->_tpl_vars['THEME']); ?>
+" style="opacity: 0.5;cursor:not-allowed">
+                        <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['privrecord'] != '' || $this->_tpl_vars['nextrecord'] != ''): ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LBL_JUMP_BTN']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_JUMP_BTN']; ?>
+" onclick="var obj = this;var lhref = getListOfRecords(obj, '<?php echo $this->_tpl_vars['MODULE']; ?>
+',<?php echo $this->_tpl_vars['ID']; ?>
+,'<?php echo $this->_tpl_vars['CATEGORY']; ?>
+');" name="jumpBtnIdTop" id="jumpBtnIdTop" src="<?php echo aicrm_imageurl('rec_jump.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+
+                        <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['nextrecord'] != ''): ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" onclick="location.href='index.php?module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&viewtype=<?php echo $this->_tpl_vars['VIEWTYPE']; ?>
+&action=DetailView&record=<?php echo $this->_tpl_vars['nextrecord']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+&start=<?php echo $this->_tpl_vars['nextrecordstart']; ?>
+'" name="nextrecord" src="<?php echo aicrm_imageurl('rec_next.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+                        <?php else: ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" src="<?php echo aicrm_imageurl('rec_next.png', $this->_tpl_vars['THEME']); ?>
+" style="opacity: 0.5;cursor:not-allowed">
+                        <?php endif; ?>
+
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td valign=top align=left >
+                <table border=0 cellspacing=0 cellpadding=3 width=100% class="dvtContentSpace" style="border-bottom:0;">
+                <tr>
+                  <td align=left>
+                  <!-- content cache -->
+                <table border=0 cellspacing=0 cellpadding=0 width=100%>
+                <tr>
+
+                    <td style="padding:10px;">
+                    <!-- Command Buttons -->
+                    <table border=0 cellspacing=0 cellpadding=0 width=100%>
+                             <!-- NOTE: We should avoid form-inside-form condition, which could happen when
+                                Singlepane view is enabled. -->
+                             <form action="index.php" method="post" name="DetailView" id="form">
+                            <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => 'DetailViewHidden.tpl', 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+
+                            <!-- Start of File Include by SAKTI on 10th Apr, 2008 -->
+                            <?php require_once(SMARTY_CORE_DIR . 'core.smarty_include_php.php');
+smarty_core_smarty_include_php(array('smarty_file' => "./include/DetailViewBlockStatus.php", 'smarty_assign' => '', 'smarty_once' => false, 'smarty_include_vars' => array()), $this); ?>
+
+                            <!-- Start of File Include by SAKTI on 10th Apr, 2008 -->
+
+                            <?php $_from = $this->_tpl_vars['BLOCKS']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['header'] => $this->_tpl_vars['detail']):
+?>
+
+                            <!-- Detailed View Code starts here-->
+                            <table border=0 cellspacing=0 cellpadding=0 width=100% class="small">
+
+                            <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+
+                            <td align=right></td>
+                            </tr>
+
+                            <!-- This is added to display the existing comments -->
+                            <?php if ($this->_tpl_vars['header'] == $this->_tpl_vars['MOD']['LBL_COMMENTS'] || $this->_tpl_vars['header'] == $this->_tpl_vars['MOD']['LBL_COMMENT_INFORMATION'] || $this->_tpl_vars['header'] == 'Plan Information'): ?>
+                                    <tr>
+                                        <td colspan=4 class="dvInnerHeader">
+                                            <a href="javascript:showHideStatus('comments_div','aidcomments_div','<?php echo $this->_tpl_vars['IMAGE_PATH']; ?>
+');">
+                                            <img id="aidcomments_div" src="themes/softed/images/slidedown_b.png" style="border: 0px solid #000000; width: 15px; height: 12px; margin-top: 2px;" alt="Hide" title="Hide" /></a>&nbsp;&nbsp;&nbsp;
+                                            <b><?php echo $this->_tpl_vars['MOD']['LBL_COMMENTS']; ?>
+</b>
+                                            <span style="float: right;">
+                                                <a href="javascript:void(0);" id="newcomments" class="newcomments" onclick="new_comments(<?php echo $this->_tpl_vars['ID']; ?>
+,'<?php echo $this->_tpl_vars['MODULE']; ?>
+')" style="color: #000">
+                                                <img id="aidcomments_div" src="themes/softed/images/newcomment.png" style="border: 0px solid #000000; width: 24px; height: 21px; margin-top: 2px;" alt="Hide" title="Hide" /><b style="vertical-align: super;">New Comment</b>
+                                                </a>
+                                            </span>
+                                        </td>
+                                        
+                                    </tr>
+                                    <tr><!-- tblCommentInformation -->
+                                        <td colspan=4 class="dvtCellInfo"><?php echo $this->_tpl_vars['COMMENT_BLOCK']; ?>
+</td>
+                                    </tr>
+                                    <tr><td>&nbsp;</td></tr>
+                            <?php endif; ?>
+
+
+                            <?php if ($this->_tpl_vars['header'] != 'Comments' && $this->_tpl_vars['header'] != 'Comment Information'): ?>
+                                 <tr>
+                                 <?php echo '<td colspan=4 class="dvInnerHeader"><div style="float:left; font-weight:bold; margin-left: 10px;"><div style="float:left;"><a href="javascript:showHideStatus(\'tbl'; ?><?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?><?php echo '\',\'aid'; ?><?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?><?php echo '\',\''; ?><?php echo $this->_tpl_vars['IMAGE_PATH']; ?><?php echo '\');">'; ?><?php if ($this->_tpl_vars['BLOCKINITIALSTATUS'][$this->_tpl_vars['header']] == 1): ?><?php echo '<img id="aid'; ?><?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?><?php echo '" src="themes/softed/images/slidedown_b.png" style="border: 0px solid #000000; width: 15px; height: 12px; margin-top: 2px;" alt="Hide" title="Hide" />'; ?><?php else: ?><?php echo '<img id="aid'; ?><?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?><?php echo '" src="themes/softed/images/slidedown_b2.png" style="border: 0px solid #000000; width: 15px; height: 12px; margin-top: 2px;" alt="Display" title="Display"/>'; ?><?php endif; ?><?php echo '</a></div><b style="font-family: PromptMedium; font-size: 12px;">&nbsp;&nbsp;&nbsp;'; ?><?php echo $this->_tpl_vars['header']; ?><?php echo '</b></div></td>'; ?>
+
+                                </tr>
+                            <?php endif; ?>
+
+                            </table>
+
+                                <?php if ($this->_tpl_vars['header'] != 'Comments' && $this->_tpl_vars['header'] != 'Comment Information'): ?>
+                                    <?php if ($this->_tpl_vars['BLOCKINITIALSTATUS'][$this->_tpl_vars['header']] == 1): ?>
+                                        <div style="width:auto;display:block; border: 1px solid #EDEDED; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;" id="tbl<?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?>
+" >
+                                    <?php else: ?>
+                                        <div style="width:auto;display:none;" id="tbl<?php echo ((is_array($_tmp=$this->_tpl_vars['header'])) ? $this->_run_mod_handler('replace', true, $_tmp, ' ', '') : smarty_modifier_replace($_tmp, ' ', '')); ?>
+" >
+                                    <?php endif; ?>
+
+                                    <table border=0 cellspacing=0 cellpadding=0 width="100%" class="small">
+                                    <?php $_from = $this->_tpl_vars['detail']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['detail']):
+?>
+                                        <?php if ($this->_tpl_vars['MODULE'] == 'HelpDesk'): ?>
+                                            <?php if ($this->_tpl_vars['header'] == 'รายละเอียดเรื่องร้องขอ'): ?>
+                                                <tr class='case-tr-request'  style="height:25px">
+                                            <?php elseif ($this->_tpl_vars['header'] == 'รายละเอียดเรื่องแจ้งซ่อม' || $this->_tpl_vars['header'] == 'ผลการตรวจสอบหรือแก้ไข รายการแจ้งซ่อม'): ?>
+                                                <tr class='case-tr-service'  style="height:25px">
+                                            <?php elseif ($this->_tpl_vars['header'] == 'รายละเอียดเรื่องร้องเรียน'): ?>
+                                                <tr class='case-tr-complain'  style="height:25px">
+                                            <?php else: ?>
+                                                <tr style="height:25px">
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <tr style="height:25px">
+                                        <?php endif; ?>
+
+                                        <?php $_from = $this->_tpl_vars['detail']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['label'] => $this->_tpl_vars['data']):
+?>
+                                           <?php $this->assign('keyid', $this->_tpl_vars['data']['ui']); ?>
+                                           <?php $this->assign('keyval', $this->_tpl_vars['data']['value']); ?>
+                                           <?php $this->assign('keytblname', $this->_tpl_vars['data']['tablename']); ?>
+                                           <?php $this->assign('keyfldname', $this->_tpl_vars['data']['fldname']); ?>
+                                           <?php $this->assign('keyfldid', $this->_tpl_vars['data']['fldid']); ?>
+                                           <?php $this->assign('keyoptions', $this->_tpl_vars['data']['options']); ?>
+                                           <?php $this->assign('keysecid', $this->_tpl_vars['data']['secid']); ?>
+                                           <?php $this->assign('keyseclink', $this->_tpl_vars['data']['link']); ?>
+                                           <?php $this->assign('keycursymb', $this->_tpl_vars['data']['cursymb']); ?>
+                                           <?php $this->assign('keysalut', $this->_tpl_vars['data']['salut']); ?>
+                                           <?php $this->assign('keyaccess', $this->_tpl_vars['data']['notaccess']); ?>
+                                           <?php $this->assign('keycntimage', $this->_tpl_vars['data']['cntimage']); ?>
+                                           <?php $this->assign('keyadmin', $this->_tpl_vars['data']['isadmin']); ?>
+                                           <?php $this->assign('display_type', $this->_tpl_vars['data']['displaytype']); ?>
+
+                                            <?php if ($this->_tpl_vars['label'] != ''): ?>
+                                                <?php if ($this->_tpl_vars['keycntimage'] != ''): ?>
+                                                    <td class="dvtCellLabel" align=right width=25%><input type="hidden" id="hdtxt_IsAdmin" value=<?php echo $this->_tpl_vars['keyadmin']; ?>
+></input><?php echo $this->_tpl_vars['keycntimage']; ?>
+</td>
+                                                <?php elseif ($this->_tpl_vars['keyid'] == '71' || $this->_tpl_vars['keyid'] == '72'): ?><!-- Currency symbol -->
+                                                    <td class="dvtCellLabel" align=right width=25%><?php echo $this->_tpl_vars['label']; ?>
+<input type="hidden" id="hdtxt_IsAdmin" value=<?php echo $this->_tpl_vars['keyadmin']; ?>
+></input> (<?php echo $this->_tpl_vars['keycursymb']; ?>
+)</td>
+                                                <?php else: ?>
+                                                    <td class="dvtCellLabel" align=right width=25%><input type="hidden" id="hdtxt_IsAdmin" value=<?php echo $this->_tpl_vars['keyadmin']; ?>
+></input><?php echo $this->_tpl_vars['label']; ?>
+</td>
+                                                <?php endif; ?>
+
+                                                <?php if ($this->_tpl_vars['EDIT_PERMISSION'] == 'yes' && $this->_tpl_vars['display_type'] != '2'): ?>
+
+                                                                                                        
+                                                    <?php if ($this->_tpl_vars['keyfldname'] == 'comments'): ?>
+                                                        <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => "DetailViewUI.tpl", 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+                                                    <?php elseif (( $this->_tpl_vars['keyfldname'] == 'delivery_date' || $this->_tpl_vars['keyfldname'] == 'shipping_value' ) && ( $this->_tpl_vars['assigned'] == 1 || $this->_tpl_vars['IS_ADMIN'] == 'on' )): ?>
+                                                        <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => "DetailViewUI.tpl", 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+                                                    <?php else: ?>
+                                                        <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => "DetailViewFields.tpl", 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+                                                    <?php endif; ?>
+                                                    
+                                                    
+                                                <?php else: ?>
+                                                    <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => "DetailViewFields.tpl", 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+                                                <?php endif; ?>
+
+                                            <?php endif; ?>
+                                        <?php endforeach; endif; unset($_from); ?>
+                                        </tr>
+                                    <?php endforeach; endif; unset($_from); ?>
+                                                                        </table>
+                                    </div>
+                                <?php endif; ?>
+
+                            
+                        </td>
+                       </tr>
+                    <tr>
+                    <td style="padding:10px">
+                <?php endforeach; endif; unset($_from); ?>
+
+                
+             </td>
+            </tr>
+            
+            <!-- Inventory - Product Details informations -->
+           <tr>
+            <td align="center" style="padding:10px !important;">
+            <?php echo $this->_tpl_vars['ASSOCIATED_PRODUCTS']; ?>
+
+            </td>
+           </tr>
+
+           <?php if ($this->_tpl_vars['MODULE'] == 'Quotes'): ?>
+                <tr>
+                    <td align="center" style="padding:10px !important;">
+                        <?php require_once(SMARTY_CORE_DIR . 'core.smarty_include_php.php');
+smarty_core_smarty_include_php(array('smarty_file' => "./modules/Quotes/DeliveryDate/list_view.php", 'smarty_assign' => '', 'smarty_once' => false, 'smarty_include_vars' => array()), $this); ?>
+
+                    </td>
+                </tr>
+            <?php endif; ?>
+           
+            </form>
+            <!-- End the form related to detail view -->
+
+            <?php if ($this->_tpl_vars['SinglePane_View'] == 'true' && $this->_tpl_vars['IS_REL_LIST'] == 'true'): ?>
+                <?php $_smarty_tpl_vars = $this->_tpl_vars;
+$this->_smarty_include(array('smarty_include_tpl_file' => 'RelatedListNew.tpl', 'smarty_include_vars' => array()));
+$this->_tpl_vars = $_smarty_tpl_vars;
+unset($_smarty_tpl_vars);
+ ?>
+            <?php endif; ?>
+        </table>
+
+        </td>
+        <td width=22% valign=top style="border-left:1px dashed #cccccc;padding:13px">
+
+            <!-- right side relevant info -->
+            <!-- Action links for Event & Todo START-by Minnie -->
+
+            <?php if (( $this->_tpl_vars['ADMIN'] == 'yes' || $this->_tpl_vars['FILE_STATUS'] == '1' ) && $this->_tpl_vars['FILE_EXIST'] == 'yes'): ?>
+            <table width="100%" border="0" cellpadding="5" cellspacing="0">
+                <tr><td>&nbsp;</td></tr>
+
+                <?php if ($this->_tpl_vars['TODO_PERMISSION'] == 'true' || $this->_tpl_vars['EVENT_PERMISSION'] == 'true' || $this->_tpl_vars['CONTACT_PERMISSION'] == 'true'): ?>
+
+                    <?php $this->assign('subst', 'parent_id'); ?>
+                    <?php $this->assign('acc', ""); ?>
+
+                    <!-- Start: Actions -->
+                   
+                <?php endif; ?>
+
+                <!-- End: Actions for Documents Module -->
+                  </table>
+                                <?php if (! isset ( $this->_tpl_vars['CUSTOM_LINKS'] ) || empty ( $this->_tpl_vars['CUSTOM_LINKS'] )): ?>
+                <br>
+                <?php endif; ?>
+            <?php endif; ?>
+
+                            <?php if ($this->_tpl_vars['CUSTOM_LINKS'] && $this->_tpl_vars['CUSTOM_LINKS']['DETAILVIEWBASIC']): ?>
+                    <table width="100%" border="0" cellpadding="5" cellspacing="0">
+                    <?php $_from = $this->_tpl_vars['CUSTOM_LINKS']['DETAILVIEWBASIC']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['CUSTOMLINK']):
+?>
+                    <tr>
+                        <td align="left" style="padding-left:10px;">
+                            <?php $this->assign('customlink_href', $this->_tpl_vars['CUSTOMLINK']->linkurl); ?>
+                            <?php $this->assign('customlink_label', $this->_tpl_vars['CUSTOMLINK']->linklabel); ?>
+                            <?php if ($this->_tpl_vars['customlink_label'] == ''): ?>
+                                <?php $this->assign('customlink_label', $this->_tpl_vars['customlink_href']); ?>
+                            <?php else: ?>
+                                                                <?php $this->assign('customlink_label', getTranslatedString($this->_tpl_vars['customlink_label'], $this->_tpl_vars['CUSTOMLINK']->module())); ?>
+                            <?php endif; ?>
+                            <?php if ($this->_tpl_vars['CUSTOMLINK']->linkicon): ?>
+
+                                <a class="webMnu" href="<?php echo $this->_tpl_vars['customlink_href']; ?>
+"><img hspace=5 align="absmiddle" border=0 src="<?php echo $this->_tpl_vars['CUSTOMLINK']->linkicon; ?>
+" style="width: 20px;"></a>
+
+                            <?php endif; ?>
+                                <a class="webMnu" href="<?php echo $this->_tpl_vars['customlink_href']; ?>
+"><?php echo $this->_tpl_vars['customlink_label']; ?>
+</a>
+                        </td>
+                    </tr>
+                    <?php endforeach; endif; unset($_from); ?>
+                    </table>
+                <?php endif; ?>
+            
+            <?php if ($this->_tpl_vars['CUSTOM_LINKS']): ?>
+                <br>
+                <?php if (isset ( $this->_tpl_vars['CUSTOM_LINKS']['DETAILVIEW'] )): ?>
+                    <?php $this->assign('CUSTOM_LINKS', $this->_tpl_vars['CUSTOM_LINKS']['DETAILVIEW']); ?>
+                <?php endif; ?>
+
+                <?php if (! empty ( $this->_tpl_vars['CUSTOM_LINKS'] )): ?>
+                    <table width="100%" border="0" cellpadding="5" cellspacing="0">
+                        <tr><td align="left" class="dvtUnSelectedCell dvtCellLabel">
+                            <a href="javascript:;" onmouseover="fnvshobj(this,'vtlib_customLinksLay');" onclick="fnvshobj(this,'vtlib_customLinksLay');"><b><?php echo $this->_tpl_vars['APP']['LBL_MORE']; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_ACTIONS']; ?>
+ &#187;</b></a>
+                        </td></tr>
+
+                    </table>
+                    <br>
+                    <div style="display: none; left: 193px; top: 106px;width:155px; position:absolute;" id="vtlib_customLinksLay"
+                        onmouseout="fninvsh('vtlib_customLinksLay')" onmouseover="fnvshNrm('vtlib_customLinksLay')">
+                        <table bgcolor="#ffffff" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr><td style="border-bottom: 1px solid rgb(204, 204, 204); padding: 5px;"><b><?php echo $this->_tpl_vars['APP']['LBL_MORE']; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_ACTIONS']; ?>
+ &#187;</b></td></tr>
+                        <tr>
+                            <td>
+                                <?php $_from = $this->_tpl_vars['CUSTOM_LINKS']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['CUSTOMLINK']):
+?>
+                                    <?php $this->assign('customlink_href', $this->_tpl_vars['CUSTOMLINK']->linkurl); ?>
+                                    <?php $this->assign('customlink_label', $this->_tpl_vars['CUSTOMLINK']->linklabel); ?>
+                                    <?php if ($this->_tpl_vars['customlink_label'] == ''): ?>
+                                        <?php $this->assign('customlink_label', $this->_tpl_vars['customlink_href']); ?>
+                                    <?php else: ?>
+                                                                                <?php $this->assign('customlink_label', getTranslatedString($this->_tpl_vars['customlink_label'], $this->_tpl_vars['CUSTOMLINK']->module())); ?>
+                                    <?php endif; ?>
+                                    <a href="<?php echo $this->_tpl_vars['customlink_href']; ?>
+" class="drop_down"><?php echo $this->_tpl_vars['customlink_label']; ?>
+</a>
+                                <?php endforeach; endif; unset($_from); ?>
+                            </td>
+                        </tr>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+                        <!-- Action links END -->
+
+        <?php if ($this->_tpl_vars['TAG_CLOUD_DISPLAY'] == 'true'): ?>
+        <!-- Tag cloud display -->
+        <table border=0 cellspacing=0 cellpadding=0 width=100% class="tagCloud">
+
+            <?php if ($this->_tpl_vars['MODULE'] == 'Quotes'): ?>
+                <tr><td align="left" class="genHeaderSmall"  style="padding-top:10px;">Quick Action</td></tr>
+                <tr>
+                    <td align="left" style="padding:10px 10px 20px;">
+                        <?php if ($this->_tpl_vars['quotation_type'] == 'กาวซีเมนต์'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_glue_cement.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'ขายสินค้าพร้อมบริการ' || $this->_tpl_vars['quotation_type'] == 'สินค้าปูพื้นบุผนัง (MT, ลามิเนตปิดพื้นผิว)' || $this->_tpl_vars['quotation_type'] == 'กระเบื้อง'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_goods_and_services_sold.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;" >
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (TH)
+                            </a>
+                            <br>
+                            <br>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_goods_and_services_sold_en.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (EN)
+                            </a>
+                            <br>
+                            <br>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['site_URL']; ?>
+export/report/quotation_report/Attachments/Attachments_rpt_quotation_goods_and_services_sold.pdf?v=1" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>ข้อแนะนำในการปูกระเบื้อง
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'ค่าตัดกระเบื้อง'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_tile_cutting_cost.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;" >
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (TH)
+                            </a>
+                            <br>
+                            <br>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_tile_cutting_cost_en.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (EN)
+                            </a>
+                            <br>
+                            <br>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['site_URL']; ?>
+export/report/quotation_report/Attachments/Attachments_rpt_quotation_goods_and_services_sold.pdf?v=1" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>ข้อแนะนำในการปูกระเบื้อง
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'ค่าติดตั้ง'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_installation.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (TH)
+                            </a>
+                            <br>
+                            <br>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_installation_en.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation (EN)
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'สุขภัณฑ์' || $this->_tpl_vars['quotation_type'] == 'สุขภัณฑ์และชุดครัว'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_sanitaryware.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'ค่าบริการออกแบบ'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_designfee.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation
+                            </a>
+                        <?php elseif ($this->_tpl_vars['quotation_type'] == 'ค่าขนส่ง'): ?>
+                            <a class="webMnu" href="<?php echo $this->_tpl_vars['Report_URL']; ?>
+rpt_quotation_shippingcost.rptdesign&quoteid=<?php echo $this->_tpl_vars['ID']; ?>
+&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="<?php echo aicrm_imageurl('themes/softed/images/pdf.png', $this->_tpl_vars['THEME']); ?>
+" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation
+                            </a>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
+            
+            <tr>
+                <!-- <td colspan="2" class="dvInnerHeader"> -->
+                <td colspan="2">
+                    <div style="float:left; font-weight:bold;width: 100%;margin-bottom: 10px;">
+                       
+                        <img id="aibtbltag" src="themes/softed/images/tag-fill.png" style="vertical-align: middle;border: 0px solid #000000; width: 15px; height: 15px;" alt="Hide" title="Hide">
+                        <b style="font-family: PromptMedium; font-size: 12px;vertical-align: middle;">Add Tag</b>
+                        
+                    </div>
+                </td>
+            </tr>
+
+            <tr id="tbltag" style="display:block;padding-bottom:15px;" ><!-- style="display:block;" -->
+                <td>
+                    <div id="tagdiv" style="display:visible;" class="custom-search">
+                        <form method="POST" action="javascript:void(0);" onsubmit="return tagvalidate();">
+
+                            <input type="text" class="form-control detailedViewTextBox custom-search-input" data-role="tagsinput" id="txtbox_tagfields" name="textbox_First Name" style="width:250px;margin-left:5px;"/ placeholder="พิมพ์แท็กที่ต้องการแล้วกด Enter ดูสิ!">
+
+                            
+                            <button name="button_tagfileds" type="submit" class="crmbutton small custom-search-botton" />&#10003;</button>
+                            <button name="button_clear" type="button" class="crmbutton small custom-search-botton-x" onclick="ClearTag();" />&#128473;</button>
+                            
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><b style="font-family: PromptMedium; font-size: 12px;vertical-align: middle;">Tag ( <spam class="tagscount">0</spam> )</b></td>
+            </tr>
+            <tr >
+                <td class="tagCloudDisplay" id="tagCloudDisplay" valign="top" style="padding:1rem 0rem 1rem 0.5rem; line-height: 10px">
+                    <div id="tagfields"><?php echo $this->_tpl_vars['ALL_TAG']; ?>
+</div>
+                </td>
+            </tr>
+            <tr >
+                <td>
+                    <span style="color: #ff7488;font-size: 12px;line-height: 3;font-family:PromptMedium, serif; display: none" class="error-tag" id="error-tag"><img src="themes/softed/images/warning-duotone-red.png" style="width: 20px;height: 20px;vertical-align: middle;margin-right: 5px;" >จำนวนแท็กไม่เกิน 10 แท็ก / 1 รายการ</span>
+                </td>
+            </tr>
+        </table>
+        <!-- End Tag cloud display -->
+        <?php endif; ?>
+        <br>
+
+    </td>
+</tr>
+</table>
+
+     </div>
+     <!-- PUBLIC CONTENTS STOPS-->
+    </td>
+</tr>
+    <tr>
+        <td>
+            <table border=0 cellspacing=0 cellpadding=3 width=100% class="small">
+                <tr>
+                    <td class="dvtTabCacheBottom" style="width:10px" nowrap>&nbsp;</td>
+                    <td class="dvtTabCacheBottom" style="width:10px" nowrap>&nbsp;</td>
+
+                    <td class="dvtSelectedCellBottom" align=center nowrap><?php echo $this->_tpl_vars['APP'][$this->_tpl_vars['SINGLE_MOD']]; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_INFORMATION']; ?>
+</td>
+                    <?php if ($this->_tpl_vars['SinglePane_View'] == 'false'): ?>
+                    <td class="dvtUnSelectedCellBottom" align=center nowrap><a href="index.php?action=CallRelatedList&module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&record=<?php echo $this->_tpl_vars['ID']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+"><?php echo $this->_tpl_vars['APP']['LBL_MORE']; ?>
+ <?php echo $this->_tpl_vars['APP']['LBL_INFORMATION']; ?>
+</a></td>
+                    <?php endif; ?>
+                    <td class="dvtUnSelectedCellBottom" align=center nowrap><a href="index.php?action=TimelineList&module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&record=<?php echo $this->_tpl_vars['ID']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+"><?php echo $this->_tpl_vars['APP']['LBL_TIMELINE']; ?>
+</a></td>
+                    <td class="dvtTabCacheBottom" align="right" style="width:100%">
+
+                        <?php if ($this->_tpl_vars['EDIT_DUPLICATE'] == 'permitted' || $this->_tpl_vars['is_permmited'] == true): ?>
+                            <?php if ($this->_tpl_vars['flagassign'] == true && $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา'): ?>
+                                <button title="Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','4');" type="button" name="requestapprove" value="Approve">
+                                    <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Approve
+                                </button>
+                            <?php endif; ?>
+
+                            <?php if ($this->_tpl_vars['quotation_status'] == 'ขออนุมัติใบเสนอราคา' && $this->_tpl_vars['approveflg'] == true): ?>
+                                <?php if ($this->_tpl_vars['levelflg'] == '4'): ?>
+                                    <button title="Final Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+');" type="button" name="finalapprove" value="Final Approve">
+                                        <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Final Approve
+                                    </button>&nbsp;
+                                    <button title="Cancel Final Approve" class="crmbutton small cancel Cancel_Approve" onclick="confirm_approve('Cancel_Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+')">
+                                        <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Final Approve
+                                    </button>&nbsp;
+                                <?php else: ?>
+
+                                    <button title="Approve" class="crmbutton small edit Approve" onclick="confirm_approve('Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+');" type="button" name="approvelevel" value="Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+">
+                                            <img src="themes/softed/images/approval.png" border="0" style="width: 17px;height: 19px; vertical-align: middle;">&nbsp;Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+
+                                    </button>&nbsp;
+                                    <button title="Cancel Approve" class="crmbutton small cancel Cancel_Approve" onclick="confirm_approve('Cancel_Approve','<?php echo $this->_tpl_vars['ID']; ?>
+','<?php echo $this->_tpl_vars['levelflg']; ?>
+')">
+                                            <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Approve Level <?php echo $this->_tpl_vars['levelflg']; ?>
+
+                                    </button>&nbsp;
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            
+                            <?php if ($this->_tpl_vars['flagassign'] == true && ( $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา' || $this->_tpl_vars['quotation_status'] == 'ขออนุมัติใบเสนอราคา' )): ?>
+                                <button title="Cancel Quotation" class="crmbutton small cancel Cancel_Quotaion" onclick="confirm_approve('Cancel_Quotation','<?php echo $this->_tpl_vars['ID']; ?>
+','')">
+                                        <img src="themes/softed/images/cancel_o.png" border="0" style="width: 17px;height: 17px; vertical-align: middle;">&nbsp;Cancel Quotaion
+                                </button>&nbsp;
+                            <?php endif; ?>
+
+                            <?php if ($this->_tpl_vars['quotation_status'] == 'อนุมัติใบเสนอราคา' && $this->_tpl_vars['sono'] == '' && $this->_tpl_vars['flag_erp_response_status'] != '1'): ?>
+                                <button title="Send to ERP" class="crmbutton small edit btnedit send_data_to_erp" onclick="send_data_to_erp('<?php echo $this->_tpl_vars['ID']; ?>
+');" type="button" name="Send to ERP" value="Send to ERP">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="send" data-lucide="send" class="lucide lucide-send block mx-auto" style="vertical-align: middle;">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>&nbsp;Send to ERP
+                                </button>
+                                &nbsp;
+                            <?php endif; ?>
+
+                                                        
+                                                                                <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['EDIT_DUPLICATE'] == 'permitted'): ?>
+
+                            <?php if (( $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา' || $this->_tpl_vars['sono'] == '' && $this->_tpl_vars['quotation_status'] != 'ยกเลิกใบเสนอราคา' ) && $this->_tpl_vars['flag_erp_response_status'] != '1'): ?>
+                                <button title="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_KEY']; ?>
+" class="crmbutton small btnedit" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='<?php echo $this->_tpl_vars['ID']; ?>
+';DetailView.module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; submitFormForAction('DetailView','EditView');" type="button" name="Edit" value="<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_LABEL']; ?>
+">
+                                    <img src="themes/softed/images/massedit_w.png" border="0" style="width: 15px;height: 17px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_EDIT_BUTTON_LABEL']; ?>
+
+                                </button>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <button title="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_KEY']; ?>
+" class="crmbutton small btnduplicate" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='DetailView'; DetailView.isDuplicate.value='true';DetailView.module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; submitFormForAction('DetailView','EditView');" type="button" name="Duplicate" value="<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_LABEL']; ?>
+">
+                            <img src="themes/softed/images/duplicate_w.png" border="0" style="width: 15px; height: 17px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_DUPLICATE_BUTTON_LABEL']; ?>
+
+                            </button>
+
+                        <?php if ($this->_tpl_vars['DELETE'] == 'permitted'): ?>
+                           <?php if ($this->_tpl_vars['flagassign'] == true && $this->_tpl_vars['quotation_status'] == 'เปิดใบเสนอราคา'): ?>
+                                <button title="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_TITLE']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_KEY']; ?>
+" class="crmbutton small delete btndelete" onclick="DetailView.return_module.value='<?php echo $this->_tpl_vars['MODULE']; ?>
+'; DetailView.return_action.value='index'; <?php if ($this->_tpl_vars['MODULE'] == 'Accounts'): ?> var confirmMsg = '<?php echo $this->_tpl_vars['APP']['NTC_ACCOUNT_DELETE_CONFIRMATION']; ?>
+' <?php else: ?> var confirmMsg = '<?php echo $this->_tpl_vars['APP']['NTC_DELETE_CONFIRMATION']; ?>
+' <?php endif; ?>; submitFormForActionWithConfirmation('DetailView', 'Delete', confirmMsg);" type="button" name="Delete" value="<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_LABEL']; ?>
+">
+                                    <img src="themes/softed/images/delete_w.png" border="0" style="width: 15px; vertical-align: middle;">&nbsp;<?php echo $this->_tpl_vars['APP']['LBL_DELETE_BUTTON_LABEL']; ?>
+
+                                </button>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['privrecord'] != ''): ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" onclick="location.href='index.php?module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&viewtype=<?php echo $this->_tpl_vars['VIEWTYPE']; ?>
+&action=DetailView&record=<?php echo $this->_tpl_vars['privrecord']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+&start=<?php echo $this->_tpl_vars['privrecordstart']; ?>
+'" name="privrecord" value="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" src="<?php echo aicrm_imageurl('rec_prev.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+
+                        <?php else: ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_PREVIOUS']; ?>
+" src="<?php echo aicrm_imageurl('rec_prev.png', $this->_tpl_vars['THEME']); ?>
+" style="opacity: 0.5;cursor:not-allowed">
+                        <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['privrecord'] != '' || $this->_tpl_vars['nextrecord'] != ''): ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LBL_JUMP_BTN']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LBL_JUMP_BTN']; ?>
+" onclick="var obj = this;var lhref = getListOfRecordsbutton(obj, '<?php echo $this->_tpl_vars['MODULE']; ?>
+',<?php echo $this->_tpl_vars['ID']; ?>
+,'<?php echo $this->_tpl_vars['CATEGORY']; ?>
+');" name="jumpBtnIdBottom" id="jumpBtnIdBottom" src="<?php echo aicrm_imageurl('rec_jump.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+                        <?php endif; ?>
+
+                        <?php if ($this->_tpl_vars['nextrecord'] != ''): ?>
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" accessKey="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" onclick="location.href='index.php?module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&viewtype=<?php echo $this->_tpl_vars['VIEWTYPE']; ?>
+&action=DetailView&record=<?php echo $this->_tpl_vars['nextrecord']; ?>
+&parenttab=<?php echo $this->_tpl_vars['CATEGORY']; ?>
+'" name="nextrecord" src="<?php echo aicrm_imageurl('rec_next.png', $this->_tpl_vars['THEME']); ?>
+" style="cursor: pointer;">
+                        <?php else: ?>
+
+                        <img align="absmiddle" title="<?php echo $this->_tpl_vars['APP']['LNK_LIST_NEXT']; ?>
+" src="<?php echo aicrm_imageurl('rec_next.png', $this->_tpl_vars['THEME']); ?>
+" style="opacity: 0.5; cursor:not-allowed">
+
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<?php if ($this->_tpl_vars['MODULE'] == 'Products'): ?>
+<script language="JavaScript" type="text/javascript" src="modules/Products/Productsslide.js"></script>
+<script language="JavaScript" type="text/javascript">Carousel();</script>
+<?php endif; ?>
+
+<script>
+function getTagCloud()
+{
+new Ajax.Request(
+        'index.php',
+        {queue: {position: 'end', scope: 'command'},
+        method: 'post',
+        postBody: 'module=<?php echo $this->_tpl_vars['MODULE']; ?>
+&action=<?php echo $this->_tpl_vars['MODULE']; ?>
+Ajax&file=TagCloud&ajxaction=GETTAGCLOUD&recordid=<?php echo $this->_tpl_vars['ID']; ?>
+',
+        onComplete: function(response) {
+                $("tagfields").innerHTML=response.responseText;
+
+                var numItems = jQuery('.tagit').length;
+
+                jQuery(".tagscount").html(numItems);
+            }
+        }
+);
+}
+getTagCloud();
+</script>
+<!-- added for validation -->
+<script language="javascript">
+    var fielduitype = new Array(<?php echo $this->_tpl_vars['VALIDATION_DATA_UITYPE']; ?>
+)
+    var fieldname = new Array(<?php echo $this->_tpl_vars['VALIDATION_DATA_FIELDNAME']; ?>
+);
+    var fieldlabel = new Array(<?php echo $this->_tpl_vars['VALIDATION_DATA_FIELDLABEL']; ?>
+);
+    var fielddatatype = new Array(<?php echo $this->_tpl_vars['VALIDATION_DATA_FIELDDATATYPE']; ?>
+);
+
+</script>
+  </td>
+  <td align=right valign=top><img src="<?php echo aicrm_imageurl('showPanelTopRight.gif', $this->_tpl_vars['THEME']); ?>
+"></td>
+ </tr>
+</table>
+
+<?php if ($this->_tpl_vars['MODULE'] != 'Leads' || $this->_tpl_vars['MODULE'] == 'Contacts' || $this->_tpl_vars['MODULE'] == 'Accounts' || $this->_tpl_vars['MODULE'] == 'Campaigns'): ?>
+    <form name="SendMail"><div id="sendmail_cont" style="z-index:100001;position:absolute;"></div></form>
+<?php endif; ?>
+
+<?php if ($this->_tpl_vars['MODULE'] == 'Quotes'): ?>
+<script type="text/javascript">
+displayField();
+function displayField()
+{
+    <?php $_from = $this->_tpl_vars['HIDDEN_FIELDS']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
+    foreach ($_from as $this->_tpl_vars['count'] => $this->_tpl_vars['field']):
+?>
+        <?php if ($this->_tpl_vars['field']['visible'] == 1): ?>
+            const <?php echo $this->_tpl_vars['field']['class']; ?>
+ = document.getElementsByClassName("<?php echo $this->_tpl_vars['field']['class']; ?>
+");
+            //console.log("Found elements: ", <?php echo $this->_tpl_vars['field']['class']; ?>
+); 
+            
+            for (let i = 0; i < <?php echo $this->_tpl_vars['field']['class']; ?>
+.length; i++) {
+                <?php echo $this->_tpl_vars['field']['class']; ?>
+[i].style.display = 'none';
+                <?php echo $this->_tpl_vars['field']['class']; ?>
+[i].innerHTML = '';
+                <?php echo $this->_tpl_vars['field']['class']; ?>
+[i].insertAdjacentHTML('afterend', '<td class="crmTableRow small lineOnTop" align="center">-</td>');
+            }
+        <?php endif; ?>
+    <?php endforeach; endif; unset($_from); ?>
+}
+</script>
+<?php endif; ?>

@@ -1,0 +1,100 @@
+a:3:{s:4:"time";i:1425555678;s:3:"ttl";i:100000000;s:4:"data";s:8159:" <ul class='sidebar-menu'><li class='treeview' id='WC0900'><a href='#'><i class='fa fa-truck'></i> <span>Gate In</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0900'>
+  <li id='WC0901'><a href='http://localhost/qas/gatein/gatein/index'><i class='fa fa-angle-double-right'></i>Truck Gate In</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0100'><a href='#'><i class='fa fa-truck'></i> <span>Queuing</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0100'>
+  <li id='WC0101'><a href='http://localhost/qas/queuing/geocycle_monitoring'><i class='fa fa-angle-double-right'></i>Geocycle Monitoring</a></li>
+  <li id='WC0104'><a href='http://localhost/qas/queuing/cementqueuing/ds_monitoring_dashboard'><i class='fa fa-angle-double-right'></i>Monitoring Dasboard</a></li>
+  <li id='WC0102'><a href='http://localhost/qas/queuing/geocycle_dashboard'><i class='fa fa-angle-double-right'></i>Geocycle - Driver Dashboard</a></li>
+  <li id='WC0103'><a href='http://localhost/qas/monitoring/queuing_monitoring/station_monitoring'><i class='fa fa-angle-double-right'></i>Station Monitoring</a></li>
+  <li id='WC0709'><a href='http://localhost/qas/queuing/Queuing/monitoring_dashboard'><i class='fa fa-angle-double-right'></i>Dashboard</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0400'><a href='#'><i class='fa fa-bar-chart-o'></i> <span>Report</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0400'>
+  <li class='treeview' id='WC0507'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถลูกค้า(Waste)</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0507'>
+  <li id='WC0508'><a href='http://localhost/qas/report/geocycle_monitoring/geo_rpt_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน</a></li>
+</ul> 
+</li> 
+  <li id='WC0528'><a href='http://localhost/qas/report/geocycle_monitoring/weightbridge_information'><i class='fa fa-angle-double-right'></i>Weightbridge Information</a></li>
+  <li class='treeview' id='WC0509'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถลูกค้า(STO)</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0509'>
+  <li id='WC0510'><a href='http://localhost/qas/report/geocycle_monitoring/geo_rpt_sto_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน(STO)</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0511'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>รายงานสำหรับรถPO</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0511'>
+  <li id='WC0512'><a href='http://localhost/qas/report/geocycle_rawmat_monitoring/geo_po_rpt_daily_loading_product'><i class='fa fa-angle-double-right'></i>รายงานสรุปรับสินค้าประจำวัน(PO)</a></li>
+</ul> 
+</li> 
+  <li id='WC0401'><a href='http://localhost/qas/report/geocycle_monitoring/geo_truck_monitoring_license'><i class='fa fa-angle-double-right'></i>Truck Monitoring</a></li>
+  <li id='WC0521'><a href='http://localhost/qas/report/geocycle_monitoring/geo_truck_delay'><i class='fa fa-angle-double-right'></i>Truck Delay Report</a></li>
+  <li id='WC0402'><a href='http://localhost/qas/report/geocycle_monitoring/geo_station_monitoring'><i class='fa fa-angle-double-right'></i>Station Monitoring</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0600'><a href='#'><i class='fa fa-exclamation-triangle'></i> <span>Alert & Notification</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0600'>
+  <li id='WC0601'><a href='http://localhost/qas/notification/notification/delaynotification'><i class='fa fa-angle-double-right'></i>Delay Notification</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0700'><a href='#'><i class='fa fa-th-list'></i> <span>Setting</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0700'>
+  <li id='WC0716'><a href='http://localhost/qas/dispatch/dailyplan/dispatchplan'><i class='fa fa-angle-double-right'></i>Dispatch Plan</a></li>
+  <li id='WC0702'><a href='http://localhost/qas/windowtime/windowtime/index'><i class='fa fa-angle-double-right'></i>Window Time</a></li>
+  <li id='WC0703'><a href='http://localhost/qas/bookingtime/bookingtime'><i class='fa fa-angle-double-right'></i>Booking Time</a></li>
+  <li id='WC0704'><a href='http://localhost/qas/channel/channel_setting/location_fixed'><i class='fa fa-angle-double-right'></i>Fixed Plant</a></li>
+  <li id='WC0705'><a href='http://localhost/qas/customer/customer/privilege_customer'><i class='fa fa-angle-double-right'></i>VIP Customer</a></li>
+  <li id='WC0707'><a href='http://localhost/qas/masterdata/queue_master/queue_profile'><i class='fa fa-angle-double-right'></i>Queue Profile</a></li>
+  <li id='WC0708'><a href='http://localhost/qas/channel/channel_setting/channel_management'><i class='fa fa-angle-double-right'></i>Channel Management</a></li>
+  <li id='WC0713'><a href='http://localhost/qas/channel/channel_setting/product_to_channel'><i class='fa fa-angle-double-right'></i>กำหนดสินค้าในช่องจ่าย</a></li>
+  <li id='WC0714'><a href='http://localhost/qas/channel/channel_setting/channel_to_product'><i class='fa fa-angle-double-right'></i>กำหนดช่องจ่ายให้สินค้า</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0300'><a href='#'><i class='fa fa-key'></i> <span>Account & Authorization</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0300'>
+  <li id='WC0403'><a href='http://localhost/qas/user/user_management'><i class='fa fa-angle-double-right'></i>Manage User</a></li>
+  <li id='WC0404'><a href='http://localhost/qas/user/user/user_registrator'><i class='fa fa-angle-double-right'></i>Add User Account</a></li>
+  <li id='WC0301'><a href='http://localhost/qas/privilege/privilege/form_management'><i class='fa fa-angle-double-right'></i>Form Management</a></li>
+  <li id='WC0302'><a href='http://localhost/qas/privilege/privilege/role_management'><i class='fa fa-angle-double-right'></i>Role Management</a></li>
+  <li id='WC0303'><a href='http://localhost/qas/privilege/privilege/user2security'><i class='fa fa-angle-double-right'></i>Management Permission</a></li>
+</ul> 
+</li>
+<li class='treeview' id='WC0200'><a href='#'><i class='fa fa-cog'></i> <span>System Configuration</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0200'>
+  <li class='treeview' id='WC0201'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>Geocycle Configuration</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0201'>
+  <li id='WC0202'><a href='http://localhost/qas/masterdata/dailyplan/geocycle_dailyplan'><i class='fa fa-angle-double-right'></i>Daily Plan Upload</a></li>
+  <li id='WC0405'><a href='http://localhost/qas/masterdata/geocycle_window_time/geocycle_window_time_bypoint'><i class='fa fa-angle-double-right'></i>Window Time By Unloading Plant</a></li>
+</ul> 
+</li> 
+  <li class='treeview' id='WC0710'>
+<a href='#'>
+<i class='fa fa-angle-double-right'></i><span>Product</span>
+ <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0710'>
+  <li id='WC0711'><a href='http://localhost/qas/item/item/itemdata'><i class='fa fa-angle-double-right'></i>Product List</a></li>
+</ul> 
+</li> 
+</ul> 
+</li>
+<li class='treeview' id='WC0800'><a href='#'><i class='fa  fa-angle-double-right'></i> <span>Admin Tools</span> <i class='fa fa-angle-left pull-right'></i></a>
+ <ul class='treeview-menu' id='WC0800'>
+  <li id='WC0801'><a href='http://localhost/qas/admintools/trucksimulator'><i class='fa fa-angle-double-right'></i>Truck Simulator</a></li>
+</ul> 
+</li>
+ </ul>";}

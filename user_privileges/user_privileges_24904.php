@@ -1,0 +1,9 @@
+<?php
+
+
+//This is the access privilege file
+$is_admin=true;
+
+$user_info=array('user_name'=>'000575','is_admin'=>'on','user_password'=>'$1$00$Je0D4A6TmObhP/KQo26CN/','confirm_password'=>'$1$00$DlWnPJP7iVDdlcz/RPR1s1','first_name'=>'Pheerasit','last_name'=>'Nongrung','roleid'=>'H2','email1'=>'pheerasit.no@wdc.co.th','status'=>'Active','activity_view'=>'Today','lead_view'=>'','currency_id'=>'1','currency_name'=>'Thailand, Baht','currency_code'=>'THB','currency_symbol'=>'฿','conv_rate'=>'1.000','hour_format'=>'','end_hour'=>'','start_hour'=>'','title'=>'','phone_work'=>'','department'=>'','phone_mobile'=>'','reports_to_id'=>'','phone_other'=>'','email2'=>'','phone_fax'=>'','yahoo_id'=>'','phone_home'=>'','imagename'=>'','date_format'=>'dd-mm-yyyy','signature'=>'','description'=>'','reminder_interval'=>'None','internal_mailer'=>'','address_street'=>'','address_city'=>'','address_state'=>'','address_postalcode'=>'','address_country'=>'','asterisk_extension'=>'','use_asterisk'=>'','approve_level1'=>'','approve_level2'=>'','approve_level3'=>'','approve_level4'=>'','approve_payment'=>'','section'=>'SYSTEM','sales_org'=>'','approve_expense_level1'=>'','approve_expense_level2'=>'','approve_expense_level3'=>'','approve_expense_level4'=>'','approve_sample_level1'=>'','approve_sample_level2'=>'','approve_sample_level3'=>'','approve_sample_level4'=>'','moaiwb'=>'0','moaimb'=>'0','passed_inspection'=>'0','accesskey'=>'TF0VQzG8ZZb6uLwp','area'=>'','position'=>'','addressline1'=>'','addressline2'=>'','village'=>'','alley'=>'','road'=>'','region'=>'','province'=>'','district'=>'','subdistrict'=>'','postalcode'=>'','first_name_th'=>'Pheerasit','last_name_th'=>'Nongrung','title_th'=>'','title_en'=>'','plan_type'=>'--None--','track_report'=>'1','report_type'=>'--None--','default_view'=>'Calendar View','cf_501097'=>'--None--','cf_501096'=>'--None--','cf_501095'=>'--None--','record_id'=>'','record_module'=>'','id'=>'24904');
+
+?>

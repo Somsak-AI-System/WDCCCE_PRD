@@ -1,0 +1,1 @@
+C:\appserv\mysql\bin\mysqldump -u admin_wdccce -phellowdccce db_wdccce --routines  --lock-tables=false  --default_character_set tis620 >  C:\appserv\www\wdccce\backup_data\monday.sql

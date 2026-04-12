@@ -1,0 +1,60 @@
+<?php
+/*+********************************************************************************
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
+ * Contributor(s): mmbrich
+ ********************************************************************************/
+      
+require_once('modules/CustomView/CustomView.php');
+require_once('user_privileges/default_module_view.php');
+//echo "555";exit;
+global $singlepane_view;
+$cvObj = new CustomView(vtlib_purify($_REQUEST["list_type"]));
+
+$listquery = getListQuery(vtlib_purify($_REQUEST["list_type"]));
+//echo '<pre>';print_r($_REQUEST);echo '</pre>'; exit;
+$rs = $adb->query($cvObj->getModifiedCvListQuery(vtlib_purify($_REQUEST["cvid"]),$listquery,vtlib_purify($_REQUEST["list_type"])));
+//echo $_REQUEST["cvid"]."<br>";
+
+//echo $cvObj->getModifiedCvListQuery(vtlib_purify($_REQUEST["cvid"]),$listquery,vtlib_purify($_REQUEST["list_type"]));
+if($_REQUEST["list_type"] == "EmailTarget"){
+	$reltable = "aicrm_smartemail_emailtargetrel";
+	$relid = "emailtargetid";
+}
+elseif($_REQUEST["list_type"] == "Contacts"){
+	$reltable = "aicrm_smartemail_contactsrel";
+	$relid = "contactid";
+}
+elseif($_REQUEST["list_type"] == "Accounts"){
+	$reltable = "aicrm_smartemail_accountsrel";
+	$relid = "accountid";
+}
+elseif($_REQUEST["list_type"] == "Opportunity"){
+	$reltable = "aicrm_smartemail_opportunityrel";
+	$relid = "opportunityid";
+}
+elseif($_REQUEST["list_type"] == "Questionnaire"){
+	$reltable = "aicrm_smartemail_questionnairerel";
+	$relid = "questionnaireid";
+}
+elseif($_REQUEST["list_type"] == "Leads"){
+	$reltable = "aicrm_smartemail_leadsrel";
+	$relid = "leadid";
+}
+//echo "555";exit;
+//print_r($rs);exit;
+while($row=$adb->fetch_array($rs)) {
+	
+	$sql = "delete from $reltable where $relid = ? and smartemailid = ?";
+	$adb->pquery($sql, array($row["crmid"], $_REQUEST['return_id']));
+	$adb->pquery("INSERT INTO ".$reltable." VALUES(?,?)", array($_REQUEST["return_id"], $row["crmid"]));
+}
+
+// header("Location: index.php?module=Smartemail&action=SmartemailAjax&file=CallRelatedList&ajax=true&record=".vtlib_purify($_REQUEST['return_id']));
+// echo "<script >window.location.reload()</script>";
+//header("Location: index.php?module=Smartemail&action=SmartemailAjax&file=CallRelatedList&ajax=true&record=993788&parenttab=Marketing");
+?>

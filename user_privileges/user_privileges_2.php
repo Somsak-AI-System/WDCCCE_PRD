@@ -1,0 +1,9 @@
+<?php
+
+
+//This is the access privilege file
+$is_admin=true;
+
+$user_info=array('user_name'=>'WM1','is_admin'=>'on','user_password'=>'$1$WM$B45Fj87Ul19tkr4nY0HIf/','confirm_password'=>'$1$WM$L/MLV9aMTpoIlbjuYmGJk.','first_name'=>'Wuttipong','last_name'=>'Mejumras','roleid'=>'H2','email1'=>'wuttipong.m@aisystem.co.th','status'=>'InActive','activity_view'=>'Today','lead_view'=>'','currency_id'=>'1','currency_name'=>'Thailand, Baht','currency_code'=>'THB','currency_symbol'=>'฿','conv_rate'=>'1.000','hour_format'=>'','end_hour'=>'','start_hour'=>'','title'=>'','phone_work'=>'','department'=>'','phone_mobile'=>'0613843946','reports_to_id'=>'','phone_other'=>'','email2'=>'','phone_fax'=>'','yahoo_id'=>'','phone_home'=>'-','imagename'=>'56388.jpg','date_format'=>'dd-mm-yyyy','signature'=>'','description'=>'','reminder_interval'=>'None','internal_mailer'=>'','address_street'=>'','address_city'=>'','address_state'=>'','address_postalcode'=>'','address_country'=>'','asterisk_extension'=>'','use_asterisk'=>'','approve_level1'=>'','approve_level2'=>'','approve_level3'=>'','approve_level4'=>'','approve_payment'=>'','section'=>'SYSTEM','sales_org'=>'','approve_expense_level1'=>'','approve_expense_level2'=>'','approve_expense_level3'=>'','approve_expense_level4'=>'','approve_sample_level1'=>'','approve_sample_level2'=>'','approve_sample_level3'=>'','approve_sample_level4'=>'','moaiwb'=>'1','moaimb'=>'1','passed_inspection'=>'0','accesskey'=>'dwJShqv6YMDtTEhB','area'=>'-','position'=>'sale','addressline1'=>'','addressline2'=>'','village'=>'','alley'=>'','road'=>'','region'=>'','province'=>'','district'=>'','subdistrict'=>'','postalcode'=>'','first_name_th'=>'วุฒิพงศ์','last_name_th'=>'มีจำรัส','title_th'=>'นาย','title_en'=>'Mr.','plan_type'=>'Weekly','track_report'=>'1','report_type'=>'Weekly','default_view'=>'List View','cf_501097'=>'A','cf_501096'=>'Bangkok Project Team B','cf_501095'=>'Sales','record_id'=>'','record_module'=>'','id'=>'2');
+
+?>

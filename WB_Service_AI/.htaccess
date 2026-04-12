@@ -1,0 +1,46 @@
+<IfModule mod_php5.c>
+	php_value date.timezone "Asia/Bangkok"
+	php_value max_input_vars 4000
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Max-Age 3600
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, DELETE, PUT"
+    Header set Access-Control-Allow-Headers "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method"
+    Header set Access-Control-Allow-Credentials true
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /WB_Service_AI/
+	#RewriteBase /
+
+	RewriteCond %{REQUEST_METHOD}  !=POST
+	RewriteCond %{REQUEST_URI} ^(.*?)(/{2,})(.*)$
+	RewriteRule . %1/%3 [R=301,L]
+
+    RewriteCond %{REQUEST_URI} ^system.*
+    RewriteRule ^(.*)$ /index.php?/$1 [L]
+
+
+    RewriteCond %{REQUEST_URI} ^application.*
+    RewriteRule ^(.*)$ /index.php?/$1 [L]
+
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php?/$1 [L]
+	
+	#RewriteCond %{THE_REQUEST} //+(.+)\sHTTP
+	#RewriteRule ^(.*)$ /index.php?/$1 [L,R]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    # If we don't have mod_rewrite installed, all 404's
+    # can be sent to index.php, and everything works as normal.
+    # Submitted by: ElliotHaughin
+
+    ErrorDocument 404 /index.php
+</IfModule>
+

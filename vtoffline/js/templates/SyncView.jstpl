@@ -1,0 +1,15 @@
+<table class='small'>
+<tr>
+{#foreach $P.COLUMNS as column}
+	<th>{$T.column}</th>
+{#/for}
+</tr>
+
+{#foreach $P.RECORDS as record}
+	<tr>
+	{#foreach $T.record as column}
+	<td>{$T.column}</td>
+	{#/for}
+	</tr>
+{#/for}
+</table>

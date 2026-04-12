@@ -1,0 +1,92 @@
+﻿/*!
+ * BLOCKS - Responsive Dashboard Theme
+ *
+ * Copyright 2013 
+ * Licensed under the Apache License v2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Created by: Carlos Esteban Alvarez
+ * URL: http://www.basicoh.com
+ * Designed and built based on Twitter Bootstrap.
+ */
+
+/*CONFIGURATION USED IN LOGIN.HTML*/
+/*Login Page*/
+
+@font-face {
+    font-family: Abel;
+    src: local(Circular), url('fonts/Abel-Regular.ttf') format('opentype');
+}
+html{
+	/* This image will be displayed fullscreen */
+	background:url('../img/bg.JPG') no-repeat center center;
+	/* Ensure the html element always takes up the full height of the browser window */
+	min-height:100%;
+	/* The Magic */
+	background-size:cover;
+}
+body {
+	background:transparent;
+	min-height:100%;
+      font-family:'Abel', 'Open Sans', sans-serif;
+	  font-size:20px;
+}
+
+
+select, textarea, input[type=text], input[type=password], input[type=datetime], input[type=datetime-local], input[type=date], input[type=month], input[type=time], input[type=week], input[type=number], input[type=email], input[type=url], input[type=search], input[type=tel], input[type=color], .uneditable-input {
+  display: inline-block;
+  height: 26px;
+  padding: 4px 6px;
+  margin-bottom: 9px;
+  font-size: 20px;
+  line-height: 20px;
+  color: #9e9d9d;
+
+}
+input[type=text], input[type=password]
+{	border:none;
+	 border-bottom:1px solid #ccc;
+	 font-size:20px;
+	 line-height:25px;
+	 width:80%;
+	 color:#333;
+	
+}
+input[type=text]:focus, input[type=password]:focus
+{
+
+    background-color:#FFF;
+	color:#333;
+
+	outline-style:inherit;
+	
+ border-bottom:1px solid #ccc;
+  background-color: transparent;
+}
+
+
+.block-unit {
+  margin-bottom: 30px;
+  padding-bottom:10px;
+	border: 1px solid #6a6868;
+  /*background: rgba(0, 0, 0, 0.4);*/
+   background:#FFF;
+  -webkit-border-radius: 30px;
+     -moz-border-radius: 30px;
+          border-radius: 30px;
+}
+.header{ 
+  margin-top:10px; 
+ font-size: 28px;
+  sont-weight: 300;
+  color: #333;
+
+  }
+
+/*FORM ERROR MESSAGE*/
+.error{ color:#b2c831;}
+
+@media (max-width: 979px) {
+  .navbar-fixed-top {
+    margin-bottom: 0px;
+  }
+}

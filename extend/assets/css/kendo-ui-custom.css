@@ -1,0 +1,124 @@
+.k-filter-row th, .k-grid-header th.k-header {
+    padding: 1px 5px!important;
+}
+.k-filtercell>span {
+    padding-right: 0px!important;
+}
+.k-filter-row .k-dropdown-operator {
+    right: 0px!important;
+}
+
+.k-grid tbody tr{
+    height: 30px;
+}
+.k-grid td{
+    white-space: nowrap;
+    padding: 1px 5px!important;
+}
+/*k-grid-header, .k-header, .k-filter-row {*/
+    /*color: #fff;*/
+    /*background-color: #009efb;*/
+    /*border-color: #009efb;*/
+/*}*/
+/*.k-grid-header .k-link:link, .k-grid-header .k-link:visited, .k-grid-header .k-nav-current.k-state-hover .k-link, .k-grouping-header .k-link {*/
+    /*color: #fff;*/
+/*}*/
+/*.k-grid .k-filter-row:hover, .k-pivot-rowheaders .k-grid tr:hover {*/
+    /*background-color: #009efb;*/
+    /*border-color: #009efb;*/
+/*}*/
+.k-filter-row th {
+    border-style: none;
+}
+.k-header .k-i-filter, .k-pager-sizes .k-icon {
+    margin-top: -7px;
+}
+.k-autocomplete, .k-block, .k-calendar .k-link
+, .k-calendar td, .k-calendar-container, .k-colorpicker
+, .k-combobox, .k-datepicker, .k-datetimepicker, .k-drag-clue
+, .k-dropdown, .k-dropdown-wrap, .k-editor-inline
+, .k-grid .k-filter-options, .k-grouping-header .k-group-indicator
+, .k-inline-block, .k-list-container, .k-multiselect, .k-notification
+, .k-numeric-wrap, .k-numerictextbox, .k-picker-wrap, .k-slider-selection
+, .k-slider-track, .k-split-button, .k-textbox, .k-tile, .k-timepicker
+, .k-tooltip, .k-touch-scrollbar, .k-treeview .k-in, .k-upload, .k-window
+, .k-window-action, .k-window-titleless .k-window-content {
+    border-radius: 0px!important;
+}
+
+.k-autocomplete .k-input, .k-dropdown-wrap .k-input
+, .k-multiselect-wrap .k-input, .k-numeric-wrap .k-input
+, .k-picker-wrap .k-input, .k-selectbox .k-input, .k-textbox>input {
+    padding: 0px;
+}
+
+.k-block, .k-draghandle, .k-inline-block, .k-widget {
+    -webkit-appearance: none;
+}
+.k-editor, .k-grid, .k-menu, .k-scheduler {
+    border-radius: 0px;
+}
+
+.k-form-control {
+    background-color: lightcyan;
+    color: #212529;
+    min-height: 34px;
+    width: 100%;
+}
+
+.k-multiselect-clearable .k-multiselect-wrap {
+    min-height: 34px;
+}
+.k-grid .k-button {
+    border-radius: 0px;
+    margin: 0px;
+}
+.k-grid .k-button-icon {
+    height: calc(1.72em);
+}
+
+#all_condition .k-widget {
+    -webkit-appearance: media-slider!important;
+}
+
+.icon-remove {
+    cursor: pointer;
+}
+
+/*#all_condition .input_search {*/
+    /*min-height: 10px;*/
+    /*height: 25px;*/
+/*}*/
+
+/** treeview **/
+.k-treeview .k-top,
+.k-treeview .k-mid,
+.k-treeview .k-bot {
+    background-image: url('../../assets/images/kendoui/treeview-nodes.png');
+    background-repeat: no-repeat;
+    margin-left: -16px;
+    padding-left: 16px;
+}
+
+.k-treeview .k-item { background-image: url('../../assets/images/kendoui/treeview-line.png'); }
+.k-treeview .k-last { background-image: none; }
+
+
+.k-treeview .k-top { background-position: -91px 0; }
+.k-treeview .k-bot { background-position: -69px -22px; }
+.k-treeview .k-mid { background-position: -47px -44px; }
+.k-treeview .k-last .k-top { background-position: -25px -66px; }
+.k-treeview .k-group .k-last .k-bot { background-position: -69px -22px; }
+
+.k-treeview .k-item {
+    background-repeat: no-repeat;
+}
+
+.k-treeview .k-first {
+    background-repeat: no-repeat;
+    background-position: 0 16px;
+}
+
+.editor-font1 {
+    font-family: THSarabunNew;
+}

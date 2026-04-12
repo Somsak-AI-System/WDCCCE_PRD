@@ -1,0 +1,44 @@
+<h2 class='big'>{$P.MODULE}</h2>
+
+{#param name=ROWCOLS value=4}
+{#param name=ROWOPEN value=false}
+
+<form method='POST' action='javascript:void(0);' id='FrmCreateView'>
+	<input type='hidden' name='module' value='{$P.MODULE}'>
+
+	<table cellpadding=5 cellspacing=0 border=0>
+	{#foreach $P.FIELDS as field}
+	{#if ($T.field$index % $P.ROWCOLS) == 0} 
+	<tr valign=top>
+	{#param name=ROWOPEN value=true}	
+	{#/if}
+
+		<td class='small'>
+		{#if $T.field.mandatory}
+			<input type='checkbox' name='{$T.field.name}' value='{$T.field.name}' checked='true' disabled='true'> {$T.field.label} <font color=red>*</font>
+		{#elseif $T.field.selected}
+			<input type='checkbox' name='{$T.field.name}' value='{$T.field.name}' checked='true'> {$T.field.label}
+		{#else}
+			<input type='checkbox' name='{$T.field.name}' value='{$T.field.name}'> {$T.field.label}
+		{#/if}
+		</td>
+		
+	{#if ($T.field$index % $P.ROWCOLS) == ($P.ROWCOLS-1)} 
+	</tr>
+	{#param name=ROWOPEN value=false}
+	{#/if}
+	{#/for}
+
+	{#if $P.ROWOPEN}
+	</tr>
+	{#param name=ROWOPEN value=false}
+	{#/if}
+
+	<tr>
+		<td>
+			<input type='button' class='button' value='{$P.APP.LBL_SAVE}' onclick='vtoffline.IndexPage.ColumnsSave(this.form)'>
+			<input type='button' class='button' value='{$P.APP.LBL_CANCEL}' onclick="vtoffline.IndexPage.Moduleview('{$P.MODULE}');">
+		</td>
+	</tr>
+	</table>
+</form>
