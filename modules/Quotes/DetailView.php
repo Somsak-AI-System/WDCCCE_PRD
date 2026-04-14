@@ -48,6 +48,8 @@ $log->info("Quote detail view");
 
 $smarty = new vtigerCRM_Smarty;
 $smarty->assign('IS_ADMIN', $current_user->is_admin);
+$quote_inv_uname = isset($current_user->column_fields['user_name']) ? trim($current_user->column_fields['user_name']) : '';
+$smarty->assign('SHOW_CREATE_INVOICE_FROM_QUOTE', ($current_user->is_admin == 'on' || $quote_inv_uname === '000421'));
 $smarty->assign("MOD", $mod_strings);
 $smarty->assign("APP", $app_strings);
 

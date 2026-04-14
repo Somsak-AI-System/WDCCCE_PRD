@@ -553,7 +553,7 @@ function sendfile_email()
                                 global $campaignid,$viewlog;
                             {/php}
 
-                            {if $MODULE eq 'Quotes'}
+                            {if $MODULE eq 'Quotes' && $SHOW_CREATE_INVOICE_FROM_QUOTE}
                                 <button type='button' class='crmbutton small edit'
                                     onclick='window.open("index.php?module=Salesinvoice&action=EditView&return_action=DetailView&parenttab=Sales&QuoteID={$ID}", "_blank")'
                                 >
@@ -1034,7 +1034,7 @@ function sendfile_email()
                 </tr>
             {/if}
 
-            {if $MODULE eq 'Salesinvoice'}
+            {if $MODULE eq 'Salesinvoice' && $SHOW_INVOICE_PDF_REPORT}
                 <tr><td align="left" class="genHeaderSmall"  style="padding-top:10px;">{*{$APP.LBL_REPORT}*}Quick Action</td></tr>
                 <tr>
                     <td align="left" style="padding:10px 10px 20px;">
@@ -1117,7 +1117,7 @@ function sendfile_email()
                             global $campaignid,$viewlog;
                         {/php}
 
-                        {if $MODULE eq 'Quotes'}
+                        {if $MODULE eq 'Quotes' && $SHOW_CREATE_INVOICE_FROM_QUOTE}
                             <button type='button' class='crmbutton small edit'
                                     onclick='window.open("index.php?module=Salesinvoice&action=EditView&return_action=DetailView&parenttab=Sales&QuoteID={$ID}", "_blank")'
                                 >

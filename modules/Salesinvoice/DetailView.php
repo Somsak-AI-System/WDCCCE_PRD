@@ -25,7 +25,7 @@ require_once('data/Tracker.php');
 require_once('include/CustomFieldUtil.php');
 require_once('include/utils/utils.php');
 require_once('user_privileges/default_module_view.php');
-global $mod_strings,$app_strings,$currentModule,$theme,$singlepane_view;
+global $mod_strings,$app_strings,$currentModule,$theme,$singlepane_view,$current_user;
 
 $focus = CRMEntity::getInstance($currentModule);
 
@@ -45,6 +45,8 @@ $image_path=$theme_path."images/";
 $log->info("Salesinvoice detail view");
 
 $smarty = new vtigerCRM_Smarty;
+$si_pdf_uname = isset($current_user->column_fields['user_name']) ? trim($current_user->column_fields['user_name']) : '';
+$smarty->assign('SHOW_INVOICE_PDF_REPORT', ($current_user->is_admin == 'on' || $si_pdf_uname === '000421'));
 $smarty->assign("MOD", $mod_strings);
 $smarty->assign("APP", $app_strings);
 
