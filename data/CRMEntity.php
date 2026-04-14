@@ -860,6 +860,12 @@ class CRMEntity
                     $adb->pquery($sqlupdate, array());
                 }
 
+            } else if ($_REQUEST['module'] == "Salesinvoice" && $table_name == "aicrm_salesinvoice") {
+                include_once("include/myFunction.php");
+                $cd = get_autorun("" . substr((date("Y") + 543), -2).date('m'), "Salesinvoice", "4");
+                $sqlupdate = " update  aicrm_salesinvoice set salesinvoice_no = '" . $cd . "' where  salesinvoiceid= '" . $this->id . "' ";
+                $adb->pquery($sqlupdate, array());
+
             } else if ($_REQUEST['module'] == "Projects" && $table_name == "aicrm_projectscf") {
                 include_once("include/myFunction.php");
                 $cd = get_autorun("POD" . substr((date("Y") + 543), -2).date('m'), "Projects", "6");

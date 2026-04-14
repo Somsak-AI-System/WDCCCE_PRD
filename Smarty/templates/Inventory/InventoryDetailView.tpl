@@ -553,6 +553,22 @@ function sendfile_email()
                                 global $campaignid,$viewlog;
                             {/php}
 
+                            {if $MODULE eq 'Quotes'}
+                                <button type='button' class='crmbutton small edit'
+                                    onclick='window.open("index.php?module=Salesinvoice&action=EditView&return_action=DetailView&parenttab=Sales&QuoteID={$ID}", "_blank")'
+                                >
+                                    Create Invoice
+                                </button>
+                            {/if}
+
+                            {if $MODULE eq 'Salesinvoice' && $INVOICE_STATUS eq 'Open'}
+                            <button type='button' class='crmbutton small edit'
+                                onclick='setFinishInvoice({$ID})'
+                            >
+                                Finish 
+                            </button>
+                            {/if}
+
                             {if $EDIT_DUPLICATE eq 'permitted' || $is_permmited eq true}
                                 {if $flagassign eq true && $quotation_status eq 'เปิดใบเสนอราคา' }
                                     <button title="Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','{$ID}','4');" type="button" name="requestapprove" value="Approve">
@@ -620,7 +636,7 @@ function sendfile_email()
 
                             {if $EDIT_DUPLICATE eq 'permitted' }
 
-                                {if ($quotation_status eq 'เปิดใบเสนอราคา' || $sono eq '' && $quotation_status neq 'ยกเลิกใบเสนอราคา')  && $flag_erp_response_status neq '1' }
+                                {if $MODULE neq 'Salesinvoice' && ($quotation_status eq 'เปิดใบเสนอราคา' || $sono eq '' && $quotation_status neq 'ยกเลิกใบเสนอราคา')  && $flag_erp_response_status neq '1' }
                                     <button title="{$APP.LBL_EDIT_BUTTON_TITLE}" accessKey="{$APP.LBL_EDIT_BUTTON_KEY}" class="crmbutton small btnedit" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='{$ID}';DetailView.module.value='{$MODULE}'; submitFormForAction('DetailView','EditView');" type="button" name="Edit" value="{$APP.LBL_EDIT_BUTTON_LABEL}">
                                         <img src="themes/softed/images/massedit_w.png" border="0" style="width: 15px;height: 17px; vertical-align: middle;">&nbsp;{$APP.LBL_EDIT_BUTTON_LABEL}
                                     </button>
@@ -1017,6 +1033,17 @@ function sendfile_email()
                     </td>
                 </tr>
             {/if}
+
+            {if $MODULE eq 'Salesinvoice'}
+                <tr><td align="left" class="genHeaderSmall"  style="padding-top:10px;">{*{$APP.LBL_REPORT}*}Quick Action</td></tr>
+                <tr>
+                    <td align="left" style="padding:10px 10px 20px;">
+                        <a class="webMnu" href="{$Report_URL}rpt_invoice.rptdesign&salesinvoiceid={$ID}&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                            <img src="{'themes/softed/images/pdf.png'|@aicrm_imageurl:$THEME}" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Invoice
+                        </a>
+                    </td>
+                </tr>
+            {/if}
             
             <tr>
                 <!-- <td colspan="2" class="dvInnerHeader"> -->
@@ -1086,6 +1113,18 @@ function sendfile_email()
                     <td class="dvtUnSelectedCellBottom" align=center nowrap><a href="index.php?action=TimelineList&module={$MODULE}&record={$ID}&parenttab={$CATEGORY}">{$APP.LBL_TIMELINE}</a></td>
                     <td class="dvtTabCacheBottom" align="right" style="width:100%">
 
+                        {php}
+                            global $campaignid,$viewlog;
+                        {/php}
+
+                        {if $MODULE eq 'Quotes'}
+                            <button type='button' class='crmbutton small edit'
+                                    onclick='window.open("index.php?module=Salesinvoice&action=EditView&return_action=DetailView&parenttab=Sales&QuoteID={$ID}", "_blank")'
+                                >
+                                Create Invoice
+                            </button>
+                        {/if}
+
                         {if $EDIT_DUPLICATE eq 'permitted' || $is_permmited eq true}
                             {if $flagassign eq true && $quotation_status eq 'เปิดใบเสนอราคา'}
                                 <button title="Approve" class="crmbutton small edit Request_Approve" onclick="confirm_approve('Approve','{$ID}','4');" type="button" name="requestapprove" value="Approve">
@@ -1145,7 +1184,7 @@ function sendfile_email()
 
                         {if $EDIT_DUPLICATE eq 'permitted' }
 
-                            {if ($quotation_status eq 'เปิดใบเสนอราคา' || $sono eq '' && $quotation_status neq 'ยกเลิกใบเสนอราคา')  && $flag_erp_response_status neq '1'}
+                            {if $MODULE neq 'Salesinvoice' && ($quotation_status eq 'เปิดใบเสนอราคา' || $sono eq '' && $quotation_status neq 'ยกเลิกใบเสนอราคา')  && $flag_erp_response_status neq '1'}
                                 <button title="{$APP.LBL_EDIT_BUTTON_TITLE}" accessKey="{$APP.LBL_EDIT_BUTTON_KEY}" class="crmbutton small btnedit" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='{$ID}';DetailView.module.value='{$MODULE}'; submitFormForAction('DetailView','EditView');" type="button" name="Edit" value="{$APP.LBL_EDIT_BUTTON_LABEL}">
                                     <img src="themes/softed/images/massedit_w.png" border="0" style="width: 15px;height: 17px; vertical-align: middle;">&nbsp;{$APP.LBL_EDIT_BUTTON_LABEL}
                                 </button>

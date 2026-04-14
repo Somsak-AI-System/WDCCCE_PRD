@@ -1181,6 +1181,26 @@ function getListViewEntries($focus, $module, $list_result, $navigation_array, $r
                     }
                 }
 
+            }else if ($module=="Salesinvoice") {
+
+                if(!(is_array($selectedfields) && $selectedfields != ''))
+                {
+
+                    if(isPermitted($module,"Delete",$entity_id) == 'yes'){
+                        $del_link = getListViewDeleteLink($module,$entity_id,$relatedlist,$varreturnset);
+
+                        if($del_link != ""){
+                            $links_info .=  "<a href='javascript:confirmdelete(\"".addslashes(urlencode($del_link))."\")'>".$app_strings["LNK_DELETE"]."</a>";
+                        }
+                    }
+                }
+                // Record Change Notification
+                if(method_exists($focus, 'isViewed') && PerformancePrefs::getBoolean('LISTVIEW_RECORD_CHANGE_INDICATOR', true)) {
+                    if(!$focus->isViewed($entity_id)) {
+                        $links_info .= " | <img src='" . aicrm_imageurl('important1.gif', $theme) . "' border=0 title='Owner Unread'>";
+                    }
+                }
+
             }else if ($module=="Leads") {
                 
                 if(isPermitted($module,"EditView","") == 'yes'){

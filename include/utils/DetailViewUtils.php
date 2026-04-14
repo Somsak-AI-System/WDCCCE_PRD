@@ -5198,7 +5198,7 @@ function getDetailAssociatedProducts($module,$focus)
 	  $currencytype = getInventoryCurrencyInfo($module, $focus->id);
   }
 	  
-  if($module != 'Branchs' && $module != 'Questionnaireanswer' && $module != 'Smartquestionnaire' && $module !="Serial" && $module !="Errors" && $module !="Errorslist" && $module !="Sparepart" && $module !="Sparepartlist" && $module !="Competitor" &&  $module !="Quotes" && $module != 'Opportunity' && $module != 'Campaigns' && $module != 'Activitys' &&  $module != 'KnowledgeBase' && $module != 'Quotation' && $module != 'PriceList' && $module != 'Job' && $module != 'SmartSms' && $module !="Smartemail" && $module !="Faq" && $module !="Plant" && $module !="Order" && $module !="Deal" && $module !="Promotion" && $module !="Voucher" && $module !="Questionnaire" && $module !="Questionnairetemplate" && $module !="Announcement" && $module !="Promotionvoucher" && $module !="Competitorproduct" && $module !="Premuimproduct" && $module !="Servicerequest" && $module !="Redemption" && $module !="Point" && $module !="Salesorder" && $module != 'Projects' && $module != 'Seriallist' && $module != 'Inspection' && $module != 'Inspectiontemplate' && $module !="Service" && $module !="Expense" && $module !="Purchasesorder" && $module !="Samplerequisition" && $module !="Goodsreceive" && $module !="Marketingtools"){
+  if($module != 'Branchs' && $module != 'Questionnaireanswer' && $module != 'Smartquestionnaire' && $module !="Serial" && $module !="Errors" && $module !="Errorslist" && $module !="Sparepart" && $module !="Sparepartlist" && $module !="Competitor" &&  $module !="Quotes" &&  $module !="Salesinvoice" && $module != 'Opportunity' && $module != 'Campaigns' && $module != 'Activitys' &&  $module != 'KnowledgeBase' && $module != 'Quotation' && $module != 'PriceList' && $module != 'Job' && $module != 'SmartSms' && $module !="Smartemail" && $module !="Faq" && $module !="Plant" && $module !="Order" && $module !="Deal" && $module !="Promotion" && $module !="Voucher" && $module !="Questionnaire" && $module !="Questionnairetemplate" && $module !="Announcement" && $module !="Promotionvoucher" && $module !="Competitorproduct" && $module !="Premuimproduct" && $module !="Servicerequest" && $module !="Redemption" && $module !="Point" && $module !="Salesorder" && $module != 'Projects' && $module != 'Seriallist' && $module != 'Inspection' && $module != 'Inspectiontemplate' && $module !="Service" && $module !="Expense" && $module !="Purchasesorder" && $module !="Samplerequisition" && $module !="Goodsreceive" && $module !="Marketingtools"){
 	  
 	  $output = '';
 	  //Header Rows
@@ -5219,7 +5219,7 @@ function getDetailAssociatedProducts($module,$focus)
 		  </td>';
 
 	  //Add Quantity in Stock column for SO, Quotes and Invoice
-	  if($module == 'Quotes' || $module == 'Salesorder' || $module == 'Invoice')
+	  if($module == 'Quotes' || $module == 'Salesorder' || $module == 'Invoice' || $module == 'Salesinvoice')
 		  $output .= '<td width=10% class="lvtCol"><b>'.$app_strings['LBL_QTY_IN_STOCK'].'</b></td>';
 
 		  $output .= '
@@ -5233,7 +5233,7 @@ function getDetailAssociatedProducts($module,$focus)
 	  // DG 15 Aug 2006
 	  // Add "ORDER BY sequence_no" to retain add order on all inventoryproductrel items
 
-	  if($module == 'Quotes' || $module == 'Order' || $module == 'Salesorder' )
+	  if($module == 'Quotes' || $module == 'Order' || $module == 'Salesorder' || $module == 'Salesinvoice')
 	  {
 		  $query="select case when aicrm_products.productid != '' then aicrm_products.productname else aicrm_service.service_name end as productname," .
 				  " case when aicrm_products.productid != '' then 'Products' else 'Services' end as entitytype," .
@@ -5382,6 +5382,46 @@ function getDetailAssociatedProducts($module,$focus)
 	  $output .= '</table>';
 	  //$netTotal should be equal to $focus->column_fields['hdnSubTotal']
 	  $netTotal = $focus->column_fields['hdnSubTotal'];
+	  if($module == 'Salesinvoice'){
+		  // Force TOTAL PRICE to use persisted salesinvoice subtotal in this summary section.
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
+	  if($module == 'Salesinvoice'){
+		  // Ensure TOTAL PRICE in this summary block uses saved salesinvoice subtotal.
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
+	  if($module == 'Salesinvoice'){
+		  // Force TOTAL PRICE from saved salesinvoice subtotal in this inventory layout block.
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
+	  if($module == 'Salesinvoice'){
+		  // Salesinvoice TOTAL PRICE should always show saved invoice subtotal.
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
 	  //Display the total, adjustment, S&H details
 	  $output .= '<table width="100%" border="0" cellspacing="0" cellpadding="5" class="crmTable">';
 	  $output .= '<tr>';
@@ -5483,7 +5523,7 @@ function getDetailAssociatedProducts($module,$focus)
 	  $output .= '</table>';
   }
   
-  else if($module =="Quotes" || $module =="Salesorder"){ 
+  else if($module =="Quotes"  || $module == 'Salesinvoice' || $module =="Salesorder"){ 
 	  
 	  $output = '';
 	  //Header Rows
@@ -5530,7 +5570,7 @@ function getDetailAssociatedProducts($module,$focus)
 		  <td valign="top" style="display:none" class="lvtCol" align="center"><b>'.$app_strings['LBL_NET_PRICE'].'</b></td>
 		 </tr>
 		 ';
-	  }else if($module =="Quotes"){
+	  }else if($module =="Quotes"  || $module == 'Salesinvoice'){
 
 		$output .= '
 		<table width="100%"  border="0" align="center" cellpadding="12" cellspacing="0" class="crmTable" id="proTab">
@@ -5646,6 +5686,10 @@ function getDetailAssociatedProducts($module,$focus)
 	   
 	  if($module =="Salesorder"){
 		  $sql_quotes = "select * from aicrm_salesorder where salesorderid=".$focus->id;
+		  $query_quotes = mysql_query($sql_quotes);//$adb->pquery($sql_quotes,'');
+		  $rs_quotes = mysql_fetch_array($query_quotes); //$adb->query_result($query_quotes, 0, 'discountTotal_final');
+	  } else if($module =="Salesinvoice"){
+		  $sql_quotes = "select * from aicrm_salesinvoice where salesinvoiceid=".$focus->id;
 		  $query_quotes = mysql_query($sql_quotes);//$adb->pquery($sql_quotes,'');
 		  $rs_quotes = mysql_fetch_array($query_quotes); //$adb->query_result($query_quotes, 0, 'discountTotal_final');
 	  }else {
@@ -5971,6 +6015,15 @@ function getDetailAssociatedProducts($module,$focus)
 	  $output .= '</table>';
 
 	  $netTotal = $focus->column_fields['hdnSubTotal'];
+	  if($module == 'Salesinvoice'){
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
 
 	  //Display the total, adjustment, S&H details
 	  $output .= '<table width="100%" border="0" cellspacing="0" cellpadding="5" class="crmTable">';
@@ -6010,7 +6063,48 @@ function getDetailAssociatedProducts($module,$focus)
 
 		  $output .= '<tr>';
 
-		  if($module == 'Quotes' || $module == 'Salesinvoice'){
+		  if($module == 'Salesinvoice'){
+			$discount_calculated = (isset($rs_quotes['discount_amount']) && $rs_quotes['discount_amount'] !== '' && strtoupper((string)$rs_quotes['discount_amount']) !== 'NULL') ? (float)$rs_quotes['discount_amount'] : 0.00;
+			$afterdis_final = $netTotal - $discount_calculated;
+			if(isset($rs_quotes['hdn_total_after_bill_discount']) && $rs_quotes['hdn_total_after_bill_discount'] !== '' && strtoupper((string)$rs_quotes['hdn_total_after_bill_discount']) !== 'NULL'){
+				$afterdis_final = (float)$rs_quotes['hdn_total_after_bill_discount'];
+			}
+			$bill_discount_calculated = (isset($rs_quotes['hdn_bill_discount']) && $rs_quotes['hdn_bill_discount'] !== '' && strtoupper((string)$rs_quotes['hdn_bill_discount']) !== 'NULL') ? (float)$rs_quotes['hdn_bill_discount'] : 0.00;
+			$total_after_bill_discount_calculated = $afterdis_final - $bill_discount_calculated;
+			if(isset($rs_quotes['total_after_bill_discount']) && $rs_quotes['total_after_bill_discount'] !== '' && strtoupper((string)$rs_quotes['total_after_bill_discount']) !== 'NULL'){
+				$total_after_bill_discount_calculated = (float)$rs_quotes['total_after_bill_discount'];
+			}else if(isset($rs_quotes['hdn_total_after_bill_discount']) && $rs_quotes['hdn_total_after_bill_discount'] !== '' && strtoupper((string)$rs_quotes['hdn_total_after_bill_discount']) !== 'NULL'){
+				$total_after_bill_discount_calculated = (float)$rs_quotes['hdn_total_after_bill_discount'];
+			}
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">(-)&nbsp;<b><span>'.$app_strings['LBL_DISCOUNT'].'</span></b></td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format($discount_calculated, 2, '.', ',').'</td>';
+		  	$output .= '</tr>';
+	
+		  	$output .= '<tr>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">Total After Discount</td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'. number_format($afterdis_final, 2, '.', ',') .'</td>';
+		  	$output .= '</tr>';
+
+		  	$output .= '<tr>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">ส่วนลดท้ายบิล</td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format($bill_discount_calculated, 2, '.', ',').'</td>';
+		  	$output .= '</tr>';
+
+		  	$output .= '<tr>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">Total หลังลดท้ายบิล</td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format($total_after_bill_discount_calculated, 2, '.', ',').'</td>';
+		  	$output .= '</tr>';
+
+		  	$output .= '<tr>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">มัดจำ</td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format((float)$rs_quotes['deposit_amount'], 2, '.', ',').'</td>';
+		  	$output .= '</tr>';
+
+		  	$output .= '<tr>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">หลังหักมัดจำ</td>';
+		  	$output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format((float)$rs_quotes['deposit_amount_after'], 2, '.', ',').'</td>';
+		  	$output .= '</tr>';
+		  }else if($module == 'Quotes'){
 			$subtotal=$adb->query_result($data_q, 0, "subtotal");
 			$discount_amount=$adb->query_result($data_q, 0, "discount_amount");
 			// $subtotal=$adb->query_result($result,$i-1,'subtotal');
@@ -6078,15 +6172,6 @@ function getDetailAssociatedProducts($module,$focus)
 			  $output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format(isset($total_after_bill_discount_calculated) ? $total_after_bill_discount_calculated : $rs_quotes['hdn_total_after_bill_discount'], 2, '.', ',').'</td>';
 			  $output .= '</tr>';
 
-			  $output .= '<tr>';
-			  $output .= '<td align="right" class="crmTableRow small lineOnTop">มัดจำ</td>';
-			  $output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format($rs_quotes['deposit_amount'], 2, '.', ',').'</td>';
-			  $output .= '</tr>';
-
-			  $output .= '<tr>';
-			  $output .= '<td align="right" class="crmTableRow small lineOnTop">หลังหักมัดจำ</td>';
-			  $output .= '<td align="right" class="crmTableRow small lineOnTop">'.number_format($rs_quotes['deposit_amount_after'], 2, '.', ',').'</td>';
-			  $output .= '</tr>';
 		  }else{
 			$output .= '<td align="right" class="crmTableRow small lineOnTop">(-)&nbsp;<b><a href="javascript:;" '.$final_discount_info.'>'.$app_strings['LBL_DISCOUNT'].'</a></b></td>';
 
@@ -6104,6 +6189,9 @@ function getDetailAssociatedProducts($module,$focus)
 		  
 
 	  $grandTotal = ($focus->column_fields['hdnGrandTotal'] != '')?$focus->column_fields['hdnGrandTotal']:'0.00';
+	  if($module == 'Salesinvoice' && isset($rs_quotes['total']) && $rs_quotes['total'] !== '' && strtoupper((string)$rs_quotes['total']) !== 'NULL'){
+		  $grandTotal = (float)$rs_quotes['total'];
+	  }
 
 	  if($taxtype == 'group')
 	  {
@@ -6138,7 +6226,7 @@ function getDetailAssociatedProducts($module,$focus)
 			  $tax_info_message .= "Vat : $tax_value % = ".number_format($taxamount,2);
 		  }
 
-		  if($module=="Quotes"){
+		  if($module=="Quotes" || $module=="Salesinvoice"){
 			$tax_info_message = "Vat : $tax_value % = ".number_format($rs_quotes['tax_final'], 2, '.', ',');
 		  }
 
@@ -6152,7 +6240,7 @@ function getDetailAssociatedProducts($module,$focus)
 			  
 	  }
 
-	  if($module =="Quotes"){
+	  if($module =="Quotes" || $module=="Salesinvoice"){
 		$output .= '<tr>';
 		$output .= '<td align="right" class="crmTableRow small lineOnTop">Total Net Amount including VAT</td>';
 		$output .= '<td align="right" class="crmTableRow small lineOnTop">'. number_format($rs_quotes['total_without_vat'], 2, '.', ',') .'</td>';
@@ -6667,7 +6755,7 @@ function getDetailAssociatedProducts($module,$focus)
 				  </td>';
 		  //Upto this added to display the Product name and comment
 
-		  if($module != 'Quotes' || $module != 'Order')
+		  if($module != 'Quotes' || $module != 'Salesinvoice' || $module != 'Order')
 
 		  {
 			  $output .= '<td class="crmTableRow small lineOnTop">'.number_format($qtyinstock, 2, '.', ',').'</td>';
@@ -6755,6 +6843,15 @@ function getDetailAssociatedProducts($module,$focus)
 	  $output .= '</table>';
 
 	  $netTotal = $focus->column_fields['hdnSubTotal'];
+	  if($module == 'Salesinvoice'){
+		  $rs_sales = $adb->pquery("select subtotal from aicrm_salesinvoice where salesinvoiceid = ?", array($focus->id));
+		  if($adb->num_rows($rs_sales) > 0){
+			  $subtotal_saved = $adb->query_result($rs_sales, 0, 'subtotal');
+			  if($subtotal_saved !== '' && strtoupper((string)$subtotal_saved) !== 'NULL'){
+				  $netTotal = (float)$subtotal_saved;
+			  }
+		  }
+	  }
 
 	  //Display the total, adjustment, S&H details
 	  $output .= '<table width="100%" border="0" cellspacing="0" cellpadding="5" class="crmTable">';

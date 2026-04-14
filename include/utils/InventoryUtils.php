@@ -1123,7 +1123,7 @@ function saveInventoryProductDetails($focus, $module, $update_prod_stock='false'
 		}
 		$prod_seq++;
 
-		if($module != 'PurchaseOrder' && $module != 'HelpDesk' && $module != 'Projects' && $module != 'Quotes' && $module != 'PriceList')
+		if($module != 'PurchaseOrder' && $module != 'HelpDesk' && $module != 'Projects' && $module != 'Quotes' && $module != 'Salesinvoice' && $module != 'PriceList')
 		{
 			//update the stock with existing details
 			updateStk($prod_id,$qty,$focus->mode,$ext_prod_arr,$module);
@@ -1217,7 +1217,7 @@ function saveInventoryProductDetails($focus, $module, $update_prod_stock='false'
 	$updatequery .= " adjustment=?,";
 	array_push($updateparams, $adjustmentType.$adjustment);
 
-	if($_REQUEST['discountTotal_final']!='' && $module == 'Quotes'){
+	if($_REQUEST['discountTotal_final']!='' && ($module == 'Quotes' || $module == 'Salesinvoice')){
 		$discountTotal_final = $_REQUEST['discountTotal_final'];
 		$updatequery .= " discount_amount=?,";
 		array_push($updateparams, $discountTotal_final);
@@ -1246,9 +1246,9 @@ function saveInventoryProductDetails($focus, $module, $update_prod_stock='false'
 		array_push($updateparams, $total_tax);
 	}
 	
-	if($module=="Quotes" || $module=="Salesorder"){
+	if($module=="Quotes" || $module=="Salesorder" || $module=="Salesinvoice"){
 
-		if($module=="Quotes"){
+		if($module=="Quotes" || $module=="Salesinvoice"){
 			if($_REQUEST['tax_final']!=''){
 				$tax_final = $_REQUEST['tax_final'];
 				$updatequery .= " tax_final=?,";
@@ -1272,7 +1272,7 @@ function saveInventoryProductDetails($focus, $module, $update_prod_stock='false'
 		$updatequery .= " text_currency_en=?,";
 		array_push($updateparams, $text_currency_en);
 
-		if($module=="Quotes"){
+		if($module=="Quotes" || $module=="Salesinvoice"){
 			$discount_coupon = $_REQUEST['discount_coupon'];
 			$updatequery .= " discount_coupon=?,";
 			array_push($updateparams, $discount_coupon);
@@ -1292,6 +1292,16 @@ function saveInventoryProductDetails($focus, $module, $update_prod_stock='false'
 			$hdn_total_after_bill_discount = $_REQUEST['hdn_total_after_bill_discount'];
 			$updatequery .= " hdn_total_after_bill_discount=?,";
 			array_push($updateparams, $hdn_total_after_bill_discount);
+
+			if($module=="Salesinvoice") {
+				$deposit_amount = $_REQUEST['n_deposit'];
+				$updatequery .= " deposit_amount=?,";
+				array_push($updateparams, $deposit_amount);
+
+				$deposit_amount_after = $_REQUEST['n_after_deposit'];
+				$updatequery .= " deposit_amount_after=?,";
+				array_push($updateparams, $deposit_amount_after);
+			}
 		}
 
 	}
@@ -1714,7 +1724,7 @@ function saveInventoryPurchasesorder($focus, $module, $update_prod_stock='false'
 function getInventoryTaxType($module, $id)
 {
 	global $log, $adb;
-	if ($module!="HelpDesk" && $module!="ServiceRequest" && $module!="InternalTraining" && $module!="Promotion" && $module!="CampaignPoint"){
+	if ($module!="HelpDesk" && $module!="ServiceRequest" && $module!="InternalTraining" && $module!="Promotion" && $module!="CampaignPoint" && $module!="Salesinvoice"){
 		$log->debug("Entering into function getInventoryTaxType($module, $id).");
 
 		$inv_table_array = Array('Purchasesorder'=>'aicrm_purchasesorder','Salesorder'=>'aicrm_salesorder','Quotes'=>'aicrm_quotes','Projects'=>'aicrm_projects','Invoice'=>'aicrm_invoice','Order'=>'aicrm_order');
@@ -1740,7 +1750,7 @@ function getInventoryTaxType($module, $id)
 function getInventoryCurrencyInfo($module, $id)
 {	
 	global $log, $adb;
-	if ($module!="HelpDesk" && $module!="ServiceRequest" && $module!="InternalTraining" && $module!="Promotion" && $module!="CampaignPoint"){
+	if ($module!="HelpDesk" && $module!="ServiceRequest" && $module!="InternalTraining" && $module!="Promotion" && $module!="CampaignPoint" && $module!="Salesinvoice"){
 		$log->debug("Entering into function getInventoryCurrencyInfo($module, $id).");
 
 		$inv_table_array = Array('Purchasesorder'=>'aicrm_purchasesorder','Salesorder'=>'aicrm_salesorder','Quotes'=>'aicrm_quotes','Projects'=>'aicrm_projects','Invoice'=>'aicrm_invoice','HelpDesk'=>'aicrm_ticketstatus','Order'=>'aicrm_order');

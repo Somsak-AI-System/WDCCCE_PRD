@@ -42,7 +42,9 @@
                                     <td>
                                         <table border=0 cellspacing=0 cellpadding=2>
                                             <tr>
-                                                {if $CHECK.EditView eq 'yes' && $MODULE neq 'Emails' && $MODULE neq 'Webmails' && $MODULE neq 'Inspection'}
+                                                {if $MODULE eq 'Salesinvoice'}
+                                                    <td style="display:none"></td>
+                                                {elseif $CHECK.EditView eq 'yes' && $MODULE neq 'Emails' && $MODULE neq 'Webmails' && $MODULE neq 'Inspection'}
                                                     
                                                     {if $MODULE eq 'Calendar'}
                                                         <td style="padding-right:10px;padding-left:5px;" class="submenu">

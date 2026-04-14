@@ -4782,7 +4782,7 @@ function getAssociatedProducts($module,$focus,$seid='')
 		$params = array($focus->id);
 	
 	}else{
-		if($module == 'Projects'|| $module == 'Quotes'|| $module == 'Salesorder'|| $module == 'Order'|| $module == 'HelpDesk')
+		if($module == 'Projects'|| $module == 'Quotes'|| $module == 'Salesorder'|| $module == 'Order'|| $module == 'HelpDesk'  || $module == 'Salesinvoice')
 		{	
 			$query="SELECT
 					
@@ -5010,7 +5010,7 @@ function getAssociatedProducts($module,$focus,$seid='')
 				{
 					$product_Detail[$i]['qtyInStock'.$i]=$qtyinstock;
 				}
-			if($module=="Quotes" || $module=="Order"){
+			if($module=="Quotes" || $module=="Order" || $module=="Salesinvoice"){
 				$product_Detail[$i]['productName'.$i]=$product_name;
 			}
 			$product_Detail[$i]['price_list_std'.$i]=number_format($price_list_std,2, '.', '');
@@ -5488,7 +5488,7 @@ function getAssociatedProducts_deal($module,$dealid)
 			{
 				$product_Detail[$i]['qtyInStock'.$i]=$qtyinstock;
 			}
-		if($module=="Quotes" || $module=="Order"){
+		if($module=="Quotes" || $module=="Order" || $module=="Salesinvoice"){
 			$product_Detail[$i]['productName'.$i]=$product_name;
 		}
 		$product_Detail[$i]['price_list_std'.$i]=number_format($price_list_std,2, '.', '');
@@ -5583,7 +5583,7 @@ function getAssociatedProducts_deal($module,$dealid)
 		//Calculate netprice
 		$netPrice = $totalAfterDiscount+$taxTotal;
 		//if condition is added to call this function when we create PO/SO/Quotes/Invoice from Product module
-		if($module == 'PurchaseOrder' || $module == 'SalesOrder' || $module == 'Quotes' || $module == 'Order' || $module == 'Invoice')
+		if($module == 'PurchaseOrder' || $module == 'SalesOrder' || $module == 'Quotes' || $module == 'Order' || $module == 'Invoice' || $module == 'Salesinvoice')
 		{
 			$taxtype = getInventoryTaxType($module,$focus->id);
 			if($taxtype == 'individual')
@@ -5687,7 +5687,7 @@ function getAssociatedProducts_deal($module,$dealid)
 	}
 
 
-	if($module == 'Quotes' || $module == 'Order' ){
+	if($module == 'Quotes' || $module == 'Order' || $module == 'Salesinvoice' ){
 		$product_Detail[1]['final_details']['tax_totalamount'] = $focus->column_fields['tax_final'];
 	}else{
 		$product_Detail[1]['final_details']['tax_totalamount'] = $taxtotal;
@@ -5709,7 +5709,7 @@ function getAssociatedProducts_deal($module,$dealid)
 		$shtax_label = $shtax_details[$shtax_count]['taxlabel'];
 		$shtax_percent = '0.00';
 		//if condition is added to call this function when we create PO/SO/Quotes/Invoice from Product module
-		if($module == 'PurchaseOrder' || $module == 'SalesOrder' || $module == 'Quotes' || $module == 'Order' || $module == 'Invoice')
+		if($module == 'PurchaseOrder' || $module == 'SalesOrder' || $module == 'Quotes' || $module == 'Order' || $module == 'Invoice' || $module == 'Salesinvoice')
 		{
 			$shtax_percent = getInventorySHTaxPercent($focus->id,$shtax_name);
 		}

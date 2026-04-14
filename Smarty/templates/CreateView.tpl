@@ -271,6 +271,14 @@ function sensex_info()
 								   <tr style="height:25px"><td>&nbsp;</td></tr>
 								   {/foreach}
 
+								   {if $MODULE eq 'Salesinvoice'}
+									   	<tr>
+											<td colspan=4>
+												{include file="Inventory/SalesinvoiceProductDetailsEditView.tpl"}
+											</td>
+									   	</tr>
+									{/if}
+
 									{if $MODULE eq 'Claim'}
 								   	<tr>
 								   		<td colspan="4">
