@@ -57,7 +57,7 @@ $a_data_quotes = $generate->process($sql_quotes, "all");
                             <td>
                                 <select name="deposit" id="deposit" class="small user-success">';
                                     <?php
-                                        $sql_deposit = "SELECT * FROM aicrm_deposit ORDER BY deposit ASC";
+                                        $sql_deposit = "SELECT * FROM aicrm_deposit ORDER BY CAST(deposit AS UNSIGNED) ASC";
                                         $data_deposit = $myLibrary_mysqli->select($sql_deposit);
                                         $selected = '';
                                         foreach ($data_deposit as $key => $value) {
