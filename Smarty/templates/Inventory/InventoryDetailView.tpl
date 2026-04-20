@@ -31,6 +31,35 @@
      jQuery.noConflict();
 </script>
 
+{if $MODULE eq 'Quotes'}
+<script>
+    {literal}
+    function calculateDepositPercentage(action, id) {
+        var msg = '';
+        model_width = '300';
+        model_height = '300';
+
+        msg = '% มัดจำ';
+        url = 'get_calculateDepositPercentage.php?crmid=' + id + '&action='+action;
+       
+
+        jQuery('#dialog').window({
+            title: msg,
+            width: model_width,
+            height: model_height,
+            closed: false,
+            cache: false,
+            href: url,
+            modal: true
+        });
+
+
+    }//function
+
+    {/literal}
+</script>
+{/if}
+
 <script>
 {literal}
 var gVTModule = '{$smarty.request.module|@vtlib_purify}';
@@ -554,6 +583,11 @@ function sendfile_email()
                             {/php}
 
                             {if $MODULE eq 'Quotes' && $SHOW_CREATE_INVOICE_FROM_QUOTE}
+
+                                <button title="% มัดจำ" accessKey="{$APP.LBL_DUPLICATE_BUTTON_KEY}" class="crmbutton small edit" onclick="calculateDepositPercentage('Change','{$ID}');" type="button" name="% มัดจำ">
+                                    <img src="themes/softed/images/duplicate_w.png" border="0" style="width: 15px; height: 17px; vertical-align: middle;">&nbsp;% มัดจำ
+                                </button>
+
                                 <button type='button' class='crmbutton small edit'
                                     onclick='window.open("index.php?module=Salesinvoice&action=EditView&return_action=DetailView&parenttab=Sales&QuoteID={$ID}", "_blank")'
                                 >
@@ -1029,6 +1063,14 @@ function sendfile_email()
                             <a class="webMnu" href="{$Report_URL}rpt_quotation_shippingcost.rptdesign&quoteid={$ID}&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
                                 <img src="{'themes/softed/images/pdf.png'|@aicrm_imageurl:$THEME}" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Quotation
                             </a>
+                        {/if}
+
+                        {if $MODULE eq 'Quotes' && $SHOW_CREATE_INVOICE_FROM_QUOTE}
+                        <br>
+                        <br>
+                        <a class="webMnu" href="{$Report_URL}rpt_billing_info.rptdesign&quoteid={$ID}&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                                <img src="{'themes/softed/images/pdf.png'|@aicrm_imageurl:$THEME}" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>ส่วนชำระเงิน
+                        </a>
                         {/if}
                     </td>
                 </tr>
