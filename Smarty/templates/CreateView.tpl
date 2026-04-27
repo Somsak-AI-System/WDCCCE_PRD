@@ -442,6 +442,70 @@ function sensex_info()
     var fielddatatype = new Array({$VALIDATION_DATA_FIELDDATATYPE})
 </script>
 
+{if $MODULE eq 'Salesinvoice' && $OP_MODE eq 'create_view'}
+{literal}
+<script type="text/javascript">
+(function () {
+    var form = document.forms.EditView;
+    if (!form) {
+        return;
+    }
+
+    var accountDisplayInput = form.account_name
+        || form.accountid_display
+        || form.account_name_display
+        || document.querySelector("input[name='account_name']")
+        || document.querySelector("input[name='accountid_display']")
+        || document.querySelector("input[name='account_name_display']");
+    var accountIdInput = form.accountid
+        || form.account_id
+        || document.querySelector("input[name='accountid']")
+        || document.querySelector("input[name='account_id']");
+    var salesinvoiceNameInput = form.salesinvoice_name
+        || document.querySelector("input[name='salesinvoice_name']");
+
+    if (!accountDisplayInput || !salesinvoiceNameInput) {
+        return;
+    }
+
+    function trimValue(value) {
+        return (value || '').replace(/^\s+|\s+$/g, '');
+    }
+
+    var lastAccountDisplay = trimValue(accountDisplayInput.value);
+    var lastAccountId = accountIdInput ? accountIdInput.value : '';
+
+    function syncSalesinvoiceName(force) {
+        var currentAccountDisplay = trimValue(accountDisplayInput.value);
+        if (force || currentAccountDisplay !== lastAccountDisplay) {
+            salesinvoiceNameInput.value = currentAccountDisplay;
+            lastAccountDisplay = currentAccountDisplay;
+        }
+    }
+
+    syncSalesinvoiceName(true);
+
+    accountDisplayInput.addEventListener('input', function () {
+        syncSalesinvoiceName(false);
+    });
+    accountDisplayInput.addEventListener('change', function () {
+        syncSalesinvoiceName(false);
+    });
+
+    // uitype 10 popup sets values programmatically, so poll for those changes.
+    window.setInterval(function () {
+        var currentAccountDisplay = trimValue(accountDisplayInput.value);
+        var currentAccountId = accountIdInput ? accountIdInput.value : '';
+        if (currentAccountDisplay !== lastAccountDisplay || currentAccountId !== lastAccountId) {
+            lastAccountId = currentAccountId;
+            syncSalesinvoiceName(false);
+        }
+    }, 300);
+})();
+</script>
+{/literal}
+{/if}
+
 <!-- vtlib customization: Help information assocaited with the fields -->
 {if $FIELDHELPINFO}
 <script type='text/javascript'>
