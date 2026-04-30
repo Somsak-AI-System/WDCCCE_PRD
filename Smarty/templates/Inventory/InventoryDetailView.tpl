@@ -1079,7 +1079,7 @@ function sendfile_email()
             {if $MODULE eq 'Salesinvoice' && $SHOW_INVOICE_PDF_REPORT}
                 <tr><td align="left" class="genHeaderSmall"  style="padding-top:10px;">{*{$APP.LBL_REPORT}*}Quick Action</td></tr>
                 <tr>
-                    <td align="left" style="padding:10px 10px 20px;">
+                    <td align="left" style="padding:10px 10px">
                         <a class="webMnu" href="{$Report_URL}rpt_invoice.rptdesign&salesinvoiceid={$ID}&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
                             <img src="{'themes/softed/images/pdf.png'|@aicrm_imageurl:$THEME}" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>Invoice
                         </a>
