@@ -1085,6 +1085,13 @@ function sendfile_email()
                         </a>
                     </td>
                 </tr>
+                <tr>
+                    <td align="left" style="padding:10px 10px 20px;">
+                        <a class="webMnu" href="{$Report_URL}rpt_deposit_invoice.rptdesign&salesinvoiceid={$ID}&__format=pdf" target="_blank" style="font-family: PromptMedium; font-weight: 400; color: #2B2B2B; font-size: 11px;">
+                            <img src="{'themes/softed/images/pdf.png'|@aicrm_imageurl:$THEME}" hspace="5" align="absmiddle" border="0" style="width: 28px; margin-right: 10px;"/>มัดจำ
+                        </a>
+                    </td>
+                </tr>
             {/if}
             
             <tr>
