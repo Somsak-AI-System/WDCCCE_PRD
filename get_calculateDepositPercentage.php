@@ -55,17 +55,15 @@ $a_data_quotes = $generate->process($sql_quotes, "all");
                         <tr style="height:25px" bgcolor="white">
                             <td class="lvtCol" align="left" width="40%">% มัดจำ</td>
                             <td>
-                                <select name="deposit" id="deposit" class="small user-success">';
-                                    <?php
-                                        $sql_deposit = "SELECT * FROM aicrm_deposit ORDER BY CAST(deposit AS UNSIGNED) ASC";
-                                        $data_deposit = $myLibrary_mysqli->select($sql_deposit);
-                                        $selected = '';
-                                        foreach ($data_deposit as $key => $value) {
-                                            if($value['deposit'] == $a_data_quotes[0]["deposit"]){ $selected = 'selected'; }else{$selected = '';}
-                                            echo '<option value="' . $value['deposit'] . '" '.$selected.'>' . $value['deposit'] . '</option>';
-                                        }
-                                    ?>
-                                </select>
+                                <input
+                                    type="number"
+                                    name="deposit"
+                                    id="deposit"
+                                    class="small user-success txtBox"
+                                    min="0"
+                                    step="0.01"
+                                    value="<?php echo $a_data_quotes[0]['deposit']; ?>"
+                                />
                             </td>
                         </tr>
                         
@@ -116,7 +114,12 @@ $a_data_quotes = $generate->process($sql_quotes, "all");
 
         });
 
+        var depositPattern = /^\d+(\.\d{1,2})?$/;
+
         if (deposit == '') {
+            jQuery(`#deposit`).focus();
+        } else if (!depositPattern.test(deposit)) {
+            jQuery.messager.alert('Warning', 'กรุณากรอกตัวเลข และทศนิยมได้ไม่เกิน 2 ตำแหน่ง', 'warning');
             jQuery(`#deposit`).focus();
         } else {
             closeDepositDialog();
